@@ -39,15 +39,20 @@ if [ ! -d "/app/logs" ]; then
     mkdir -p /app/logs
 fi
 
+# Map ACE_* to ACESTREAM_* for backward compatibility
+export ACESTREAM_HOST="${ACE_HOST:-${ACESTREAM_HOST:-127.0.0.1}}"
+export ACESTREAM_API_PORT="${ACE_API_PORT:-${ACESTREAM_API_PORT:-62062}}"
+export ACESTREAM_HTTP_PORT="${ACE_HTTP_PORT:-${ACESTREAM_HTTP_PORT:-6878}}"
+
 # Display configuration
 print_status "Configuration:"
 echo "  HTTPAceProxy:"
 echo "    Host: ${ACEPROXY_HOST:-0.0.0.0}"
 echo "    Port: ${ACEPROXY_PORT:-8888}"
 echo "  Ace Stream Engine:"
-echo "    Host: ${ACESTREAM_HOST:-127.0.0.1}"
-echo "    API Port: ${ACESTREAM_API_PORT:-62062}"
-echo "    HTTP Port: ${ACESTREAM_HTTP_PORT:-6878}"
+echo "    Host: ${ACESTREAM_HOST}"
+echo "    API Port: ${ACESTREAM_API_PORT}"
+echo "    HTTP Port: ${ACESTREAM_HTTP_PORT}"
 
 echo ""
 print_status "Starting HTTPAceProxy..."
