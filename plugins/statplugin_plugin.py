@@ -40,8 +40,9 @@ class Statplugin(object):
             # Check availability of a single channel
             plugin_name = query_get(connection.query, 'plugin')
             channel_name = query_get(connection.query, 'channel')
-            self.logger.debug('[Statplugin]: check_channel request: %s/%s' % (plugin_name, channel_name))
-            data = self.check_single_channel(plugin_name, channel_name)
+            content_id = query_get(connection.query, 'content_id')  # Optional: direct content_id
+            self.logger.debug('[Statplugin]: check_channel request: %s/%s (content_id: %s)' % (plugin_name, channel_name or 'N/A', content_id or 'N/A'))
+            data = self.check_single_channel(plugin_name, channel_name, content_id)
             Statplugin.send_json_response(data, connection)
 
         elif action == 'get_cache':
@@ -86,53 +87,16 @@ class Statplugin(object):
             plugin_handlers = [h for h, p in self.AceProxy.pluginshandlers.items() if id(p) == plugin_id]
             plugin_name = min(plugin_handlers, key=len) if plugin_handlers else handler_name
 
-            self.logger.debug('[Statplugin]: Processing plugin: %s (%d channels)' % (plugin_name, len(plugin.channels)))
+            self.logger.debug('[Statplugin]: Processing plugin: %s' % plugin_name)
 
-            channels_list = []
-            skipped = 0
-            for channel_name, url in plugin.channels.items():
-                # Extract content_id from URL
-                parsed = urlparse(url)
+            # Try to get channel list from JSON source (to avoid dictionary key collisions)
+            channels_list = self._get_channels_from_json_source(plugin_name, plugin)
 
-                # Handle different URL schemes
-                if parsed.scheme == 'acestream':
-                    content_id = parsed.netloc
-                elif parsed.scheme in ('http', 'https'):
-                    # For HTTP URLs, try to extract hash from path
-                    content_id = None
-                    self.logger.debug('[Statplugin]: Skipping HTTP URL for channel %s' % channel_name)
-                    skipped += 1
-                    continue
-                else:
-                    content_id = None
+            # Fallback to plugin.channels if JSON not available
+            if channels_list is None:
+                channels_list = self._get_channels_from_dict(plugin)
 
-                if not content_id or len(content_id) < 10:
-                    self.logger.warning('[Statplugin]: Invalid or missing content_id for channel %s (url: %s)' % (channel_name, url))
-                    skipped += 1
-                    continue
-
-                # Get cached status if available
-                cached = self.channel_status_cache.get(content_id, {})
-                status = 'unknown'
-                if cached:
-                    status = 'available' if cached.get('available') else 'unavailable'
-
-                # Get logo/picon if available
-                logo = ''
-                if hasattr(plugin, 'picons') and plugin.picons:
-                    logo = plugin.picons.get(channel_name, '')
-
-                channels_list.append({
-                    'name': channel_name,
-                    'content_id': content_id,
-                    'logo': logo,
-                    'status': status,
-                    'last_check': cached.get('checked_at'),
-                    'infohash': cached.get('infohash', ''),
-                })
-
-            if skipped > 0:
-                self.logger.info('[Statplugin]: Plugin %s: %d channels added, %d skipped' % (plugin_name, len(channels_list), skipped))
+            self.logger.info('[Statplugin]: Plugin %s: %d channels loaded' % (plugin_name, len(channels_list)))
 
             plugins_data.append({
                 'name': plugin_name,
@@ -147,9 +111,129 @@ class Statplugin(object):
             'cache_size': len(self.channel_status_cache)
         }
 
-    def check_single_channel(self, plugin_name, channel_name):
+    def _get_channels_from_json_source(self, plugin_name, plugin):
+        '''
+        Try to get channels directly from JSON source (e.g., IPFS hashes.json)
+        This avoids dictionary key collisions that hide duplicate channel names
+        Returns: list of channels or None if not available
+        '''
+        # Known JSON URLs for plugins
+        json_urls = {
+            'elcano': 'https://ipfs.io/ipns/k51qzi5uqu5di462t7j4vu4akwfhvtjhy88qbupktvoacqfqe9uforjvhyi4wr/hashes.json',
+            # Add more plugins here as needed
+        }
+
+        json_url = json_urls.get(plugin_name)
+        if not json_url:
+            return None  # No JSON source available
+
+        try:
+            import requests
+            self.logger.debug('[Statplugin]: Fetching JSON from %s' % json_url)
+            r = requests.get(json_url, timeout=10)
+            r.raise_for_status()
+
+            data = r.json()
+            hashes = data.get('hashes', [])
+
+            if not hashes:
+                self.logger.warning('[Statplugin]: JSON has no hashes array')
+                return None
+
+            self.logger.info('[Statplugin]: Found %d channels in JSON for plugin %s' % (len(hashes), plugin_name))
+
+            channels_list = []
+            for item in hashes:
+                title = item.get('title', 'Unknown')
+                content_id = item.get('hash')
+                logo = item.get('logo', '')
+                tvg_id = item.get('tvg_id', '')
+                group = item.get('group', '')
+
+                if not content_id or len(content_id) < 10:
+                    self.logger.warning('[Statplugin]: Skipping item with invalid hash: %s' % title)
+                    continue
+
+                # Get cached status if available
+                cached = self.channel_status_cache.get(content_id, {})
+                status = 'unknown'
+                if cached:
+                    status = 'available' if cached.get('available') else 'unavailable'
+
+                channels_list.append({
+                    'name': title,
+                    'content_id': content_id,
+                    'logo': logo,
+                    'status': status,
+                    'last_check': cached.get('checked_at'),
+                    'infohash': cached.get('infohash', ''),
+                    'tvg_id': tvg_id,
+                    'group': group
+                })
+
+            return channels_list
+
+        except Exception as e:
+            self.logger.error('[Statplugin]: Error fetching JSON for %s: %s' % (plugin_name, repr(e)))
+            return None  # Fallback to dict method
+
+    def _get_channels_from_dict(self, plugin):
+        '''
+        Get channels from plugin.channels dictionary (fallback method)
+        This may lose duplicate channel names
+        Returns: list of channels
+        '''
+        channels_list = []
+        skipped = 0
+
+        for channel_name, url in plugin.channels.items():
+            # Extract content_id from URL
+            parsed = urlparse(url)
+
+            # Handle different URL schemes
+            if parsed.scheme == 'acestream':
+                content_id = parsed.netloc
+            elif parsed.scheme in ('http', 'https'):
+                # For HTTP URLs, skip
+                skipped += 1
+                continue
+            else:
+                content_id = None
+
+            if not content_id or len(content_id) < 10:
+                self.logger.warning('[Statplugin]: Invalid or missing content_id for channel %s' % channel_name)
+                skipped += 1
+                continue
+
+            # Get cached status if available
+            cached = self.channel_status_cache.get(content_id, {})
+            status = 'unknown'
+            if cached:
+                status = 'available' if cached.get('available') else 'unavailable'
+
+            # Get logo/picon if available
+            logo = ''
+            if hasattr(plugin, 'picons') and plugin.picons:
+                logo = plugin.picons.get(channel_name, '')
+
+            channels_list.append({
+                'name': channel_name,
+                'content_id': content_id,
+                'logo': logo,
+                'status': status,
+                'last_check': cached.get('checked_at'),
+                'infohash': cached.get('infohash', ''),
+            })
+
+        if skipped > 0:
+            self.logger.info('[Statplugin]: %d channels skipped (HTTP or invalid)' % skipped)
+
+        return channels_list
+
+    def check_single_channel(self, plugin_name, channel_name, content_id=None):
         '''
         Check availability of a single channel using LOADASYNC
+        Can use either channel_name or content_id for lookup
         Returns: {status, available, infohash, error}
         '''
         try:
@@ -158,22 +242,27 @@ class Statplugin(object):
             if not plugin:
                 return {'status': 'error', 'error': 'Plugin not found: %s' % plugin_name}
 
-            if not hasattr(plugin, 'channels'):
-                return {'status': 'error', 'error': 'Plugin has no channels'}
+            # If content_id is provided directly, use it
+            if content_id:
+                self.logger.info('[Statplugin]: Checking channel by content_id: %s' % content_id[:8])
+            else:
+                # Otherwise, lookup by channel name (may not work with duplicates)
+                if not hasattr(plugin, 'channels'):
+                    return {'status': 'error', 'error': 'Plugin has no channels'}
 
-            # Get channel URL
-            url = plugin.channels.get(channel_name)
-            if not url:
-                return {'status': 'error', 'error': 'Channel not found: %s' % channel_name}
+                # Get channel URL
+                url = plugin.channels.get(channel_name)
+                if not url:
+                    return {'status': 'error', 'error': 'Channel not found: %s' % channel_name}
 
-            # Extract content_id
-            parsed = urlparse(url)
-            content_id = parsed.netloc if parsed.scheme == 'acestream' else None
+                # Extract content_id
+                parsed = urlparse(url)
+                content_id = parsed.netloc if parsed.scheme == 'acestream' else None
 
-            if not content_id:
-                return {'status': 'error', 'error': 'Invalid acestream URL'}
+                if not content_id:
+                    return {'status': 'error', 'error': 'Invalid acestream URL'}
 
-            self.logger.info('[Statplugin]: Checking channel %s/%s (content_id: %s)' % (plugin_name, channel_name, content_id[:8]))
+                self.logger.info('[Statplugin]: Checking channel %s/%s (content_id: %s)' % (plugin_name, channel_name, content_id[:8]))
 
             # Check if already in cache and fresh (< 5 minutes)
             cached = self.channel_status_cache.get(content_id)

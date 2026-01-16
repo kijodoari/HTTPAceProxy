@@ -347,7 +347,7 @@
                         </div>
                         <div class="status ${statusClass}">${statusText}</div>
                         <button class="check-btn" id="${btnId}"
-                                onclick="checkChannel('${plugin.name}', '${escapeHtml(channel.name)}', this)">
+                                onclick="checkChannel('${plugin.name}', '${escapeHtml(channel.name)}', '${channel.content_id}', this)">
                             Check
                         </button>
                     `;
@@ -368,8 +368,8 @@
             }
         }
 
-        function checkChannel(pluginName, channelName, button) {
-            const key = `${pluginName}-${channelName}`;
+        function checkChannel(pluginName, channelName, contentId, button) {
+            const key = `${pluginName}-${contentId}`;  // Use content_id for unique key
 
             if (checkingChannels.has(key)) {
                 return;
@@ -385,7 +385,8 @@
             statusDiv.className = 'status checking';
             statusDiv.textContent = '⟳ Checking...';
 
-            fetch(`/statplugin?action=check_channel&plugin=${pluginName}&channel=${encodeURIComponent(channelName)}`)
+            // Send content_id directly to avoid lookup issues with duplicate names
+            fetch(`/statplugin?action=check_channel&plugin=${pluginName}&channel=${encodeURIComponent(channelName)}&content_id=${contentId}`)
                 .then(r => r.json())
                 .then(data => {
                     if (data.status === 'success') {
