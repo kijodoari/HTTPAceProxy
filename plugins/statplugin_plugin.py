@@ -308,8 +308,9 @@ class Statplugin(object):
         '''
         try:
             import aceclient
+            import aceclient.acemessages
 
-            # Prepare parameters for AceClient
+            # Prepare parameters for AceClient (must match acehttp.py format)
             params = {
                 'ace': self.AceConfig.ace,
                 'acekey': self.AceConfig.acekey,
@@ -317,8 +318,19 @@ class Statplugin(object):
                 'aceage': self.AceConfig.aceage,
                 'connect_timeout': self.AceConfig.aceconntimeout,
                 'result_timeout': self.AceConfig.aceresulttimeout,
+                'videoseekback': self.AceConfig.videoseekback,
+                'videotimeout': self.AceConfig.videotimeout,
+                'stream_type': ' '.join(['{}={}'.format(k,v) for k,v in self.AceConfig.acestreamtype.items()]),
+                'sessionID': '0',  # Dummy session ID for check
+                'connectionTime': time.time(),
+                'clientDetail': None,
+                'channelIcon': 'http://static.acestream.net/sites/acestream/img/ACE-logo.png',
                 'content_id': content_id
             }
+
+            # Add START_PARAMS (file_indexes, developer_id, affiliate_id, zone_id, stream_id)
+            for param in aceclient.acemessages.AceConst.START_PARAMS:
+                params[param] = '0'
 
             # Create temporary AceClient
             ace = aceclient.AceClient(params)
