@@ -10,6 +10,7 @@ HTTPAceProxy allows you to watch [Ace Stream](http://acestream.org/) live stream
 
 - 🎯 **Direct Streaming** - Access Ace Stream content via HTTP URLs
 - 📺 **Pre-configured Channels** - 300+ sports channels ready to use (NewEra & Elcano plugins)
+- 👥 **Multi-Client & Multi-Channel** - Multiple users can watch different channels simultaneously
 - 🔌 **Plugin System** - Extensible architecture for custom channel sources
 - 📊 **Real-time Statistics** - Monitor connections, bandwidth, and system resources
 - 🐳 **Docker Ready** - Multi-architecture support (AMD64, ARM64)
@@ -102,6 +103,41 @@ vlc "http://localhost:8888/content_id/HASH/stream.ts"
 3. PVR IPTV Simple Client → Configure
 4. M3U Play List URL: `http://localhost:8888/newera.m3u8`
 
+## 👥 Multi-Client & Multi-Channel Support
+
+HTTPAceProxy supports **multiple simultaneous connections** with intelligent broadcast management:
+
+### Multiple Clients, Same Channel
+- ✅ Unlimited clients can watch the **same channel** simultaneously
+- ✅ Efficient resource usage - one Ace Stream connection shared by all viewers
+- ✅ Automatic broadcast management - starts when first client connects, stops when last disconnects
+
+### Multiple Clients, Different Channels
+- ✅ Up to **5 different channels** streaming concurrently (configurable)
+- ✅ Each channel has its own dedicated Ace Stream connection
+- ✅ Independent lifecycle management per channel
+- ✅ Automatic cleanup when channels become inactive
+
+### Architecture
+```
+Client A1, A2, A3 → Broadcast A (DAZN 1)     → AceStream Connection 1
+Client B1         → Broadcast B (Eurosport)  → AceStream Connection 2
+Client C1, C2     → Broadcast C (La Liga TV) → AceStream Connection 3
+```
+
+### Configuration
+
+Maximum concurrent channels can be adjusted in `aceconfig.py`:
+```python
+maxconcurrentchannels = 5  # Maximum different channels (default: 5)
+maxconns = 10              # Maximum total client connections (default: 10)
+```
+
+**Example Scenarios:**
+- 10 clients watching DAZN 1 → Uses 1 channel slot
+- 3 clients on DAZN 1 + 2 clients on Eurosport 1 → Uses 2 channel slots
+- 5 different channels with 1 client each → Uses all 5 slots (limit reached)
+
 ## 🔌 Active Plugins
 
 | Plugin | Channels | Description | Source |
@@ -170,7 +206,20 @@ Edit `aceconfig.py` to customize:
 - Ace Stream Engine connection
 - HTTP server settings (host, port)
 - Security settings (firewall, max connections)
+- Multi-channel settings (concurrent channels, max clients)
 - Plugin configurations
+
+**Key Configuration Options:**
+```python
+maxconns = 10                  # Maximum total client connections
+maxconcurrentchannels = 5      # Maximum different channels simultaneously
+httpport = 8888                # HTTPAceProxy listening port
+ace = {                        # Ace Stream Engine connection
+    'aceHostIP': '127.0.0.1',
+    'aceAPIport': '62062',
+    'aceHTTPport': '6878'
+}
+```
 
 See `acedefconfig.py` for all available options.
 
@@ -288,8 +337,10 @@ This software is provided for legitimate uses only. The authors are not responsi
 ## 📈 Project Statistics
 
 - **Language:** Python 3.11
-- **Lines of Code:** ~8,200
+- **Lines of Code:** ~8,400
 - **Active Plugins:** 3 (NewEra, Elcano, Stat)
+- **Concurrent Channels:** Up to 5 different streams simultaneously
+- **Multi-Client:** Unlimited clients per channel
 - **Supported Architectures:** AMD64, ARM64
 - **Docker Image Size:** ~200MB
 
