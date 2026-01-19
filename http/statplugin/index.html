@@ -484,6 +484,9 @@
                             <button class="bulk-btn" onclick="checkAllPeers('${plugin.name}', this)" data-plugin="${plugin.name}">
                                 👥 Peers All
                             </button>
+                            <button class="bulk-btn" onclick="checkAndPeersAll('${plugin.name}', this)" data-plugin="${plugin.name}" style="background:rgba(255,255,255,0.3)">
+                                ✓👥 Full Check
+                            </button>
                             <span class="count">${filteredChannels.length} channels</span>
                         </div>
                     </div>
@@ -559,8 +562,8 @@
             }
         }
 
-        function checkChannel(pluginName, channelName, contentId, button) {
-            const key = `${pluginName}-${contentId}`;  // Use content_id for unique key
+        async function checkChannel(pluginName, channelName, contentId, button, retries = 2) {
+            const key = `${pluginName}-${contentId}`;
 
             if (checkingChannels.has(key)) {
                 return;
@@ -570,46 +573,50 @@
             button.disabled = true;
             button.textContent = 'Checking...';
 
-            // Update status to checking
             const channelDiv = button.closest('.channel');
             const statusDiv = channelDiv.querySelector('.status');
             statusDiv.className = 'status checking';
             statusDiv.textContent = '⟳ Checking...';
 
-            // Send content_id directly to avoid lookup issues with duplicate names
-            fetch(`/statplugin?action=check_channel&plugin=${pluginName}&channel=${encodeURIComponent(channelName)}&content_id=${contentId}`)
-                .then(r => r.json())
-                .then(data => {
+            let lastError = null;
+
+            for (let attempt = 0; attempt <= retries; attempt++) {
+                try {
+                    if (attempt > 0) {
+                        button.textContent = `Retry ${attempt}...`;
+                        await new Promise(r => setTimeout(r, 1000)); // Wait 1s before retry
+                    }
+
+                    const response = await fetch(`/statplugin?action=check_channel&plugin=${pluginName}&channel=${encodeURIComponent(channelName)}&content_id=${contentId}`);
+                    const data = await response.json();
+
                     if (data.status === 'success') {
                         const available = data.available;
-                        const statusClass = available ? 'available' : 'unavailable';
-                        const statusText = available ? '✓ Available' : '✗ Unavailable';
-
-                        statusDiv.className = 'status ' + statusClass;
-                        statusDiv.textContent = statusText;
-
+                        statusDiv.className = 'status ' + (available ? 'available' : 'unavailable');
+                        statusDiv.textContent = available ? '✓ Available' : '✗ Unavailable';
                         button.textContent = data.cached ? 'Cached' : 'Checked ✓';
+                        checkingChannels.delete(key);
+                        button.disabled = false;
+                        return; // Success, exit
                     } else {
-                        statusDiv.className = 'status unavailable';
-                        statusDiv.textContent = '✗ Error';
-                        alert('Error: ' + (data.error || 'Unknown error'));
+                        lastError = data.error || 'Unknown error';
                     }
-                })
-                .catch(err => {
-                    statusDiv.className = 'status unavailable';
-                    statusDiv.textContent = '✗ Error';
-                    alert('Error: ' + err.message);
-                })
-                .finally(() => {
-                    checkingChannels.delete(key);
-                    button.disabled = false;
-                    if (button.textContent === 'Checking...') {
-                        button.textContent = 'Check';
-                    }
-                });
+                } catch (err) {
+                    lastError = err.message;
+                }
+            }
+
+            // All retries failed
+            statusDiv.className = 'status unavailable';
+            statusDiv.textContent = '✗ Error';
+            console.error(`Check failed for ${contentId}: ${lastError}`);
+
+            checkingChannels.delete(key);
+            button.disabled = false;
+            button.textContent = 'Retry';
         }
 
-        function checkPeers(contentId, button) {
+        async function checkPeers(contentId, button, retries = 2) {
             if (checkingChannels.has(`peers-${contentId}`)) {
                 return;
             }
@@ -618,28 +625,34 @@
             button.disabled = true;
             button.textContent = '...';
 
-            // Find the channel row and update peers badge
             const channelDiv = button.closest('.channel');
             const peersInfo = channelDiv.querySelector('.peers-info');
             peersInfo.innerHTML = '<span class="peers-badge checking">Checking...</span>';
 
-            fetch(`/statplugin?action=check_peers&content_id=${contentId}`)
-                .then(r => r.json())
-                .then(data => {
+            let lastError = null;
+
+            for (let attempt = 0; attempt <= retries; attempt++) {
+                try {
+                    if (attempt > 0) {
+                        peersInfo.innerHTML = `<span class="peers-badge checking">Retry ${attempt}...</span>`;
+                        await new Promise(r => setTimeout(r, 1000));
+                    }
+
+                    const response = await fetch(`/statplugin?action=check_peers&content_id=${contentId}`);
+                    const data = await response.json();
+
                     if (data.status === 'success') {
                         const totalPeers = data.total_peers || 0;
                         const peers = data.peers || 0;
                         const httpPeers = data.http_peers || 0;
                         const peersClass = totalPeers > 0 ? 'has-peers' : 'no-peers';
 
-                        // Update peers badge with detailed info
                         let badgeText = `${totalPeers} peers`;
                         if (totalPeers > 0 && (peers > 0 || httpPeers > 0)) {
                             badgeText = `${peers}P + ${httpPeers}H`;
                         }
                         peersInfo.innerHTML = `<span class="peers-badge ${peersClass}" title="P2P: ${peers}, HTTP: ${httpPeers}">${badgeText}</span>`;
 
-                        // Also update status if available
                         const statusDiv = channelDiv.querySelector('.status');
                         if (data.available) {
                             statusDiv.className = 'status available';
@@ -650,24 +663,29 @@
                         }
 
                         button.textContent = data.cached ? 'Cached' : 'Done';
+                        checkingChannels.delete(`peers-${contentId}`);
+                        button.disabled = false;
+                        setTimeout(() => {
+                            if (button.textContent === 'Done' || button.textContent === 'Cached') {
+                                button.textContent = 'Peers';
+                            }
+                        }, 2000);
+                        return; // Success
                     } else {
-                        peersInfo.innerHTML = '<span class="peers-badge no-peers">Error</span>';
-                        console.error('Peer check error:', data.error);
+                        lastError = data.error || 'Unknown error';
                     }
-                })
-                .catch(err => {
-                    peersInfo.innerHTML = '<span class="peers-badge no-peers">Error</span>';
-                    console.error('Peer check error:', err);
-                })
-                .finally(() => {
-                    checkingChannels.delete(`peers-${contentId}`);
-                    button.disabled = false;
-                    setTimeout(() => {
-                        if (button.textContent === 'Done' || button.textContent === 'Cached') {
-                            button.textContent = 'Peers';
-                        }
-                    }, 2000);
-                });
+                } catch (err) {
+                    lastError = err.message;
+                }
+            }
+
+            // All retries failed
+            peersInfo.innerHTML = '<span class="peers-badge no-peers">Error</span>';
+            console.error(`Peer check failed for ${contentId}: ${lastError}`);
+
+            checkingChannels.delete(`peers-${contentId}`);
+            button.disabled = false;
+            button.textContent = 'Retry';
         }
 
         function escapeHtml(text) {
@@ -682,7 +700,6 @@
                 return;
             }
 
-            // Find plugin data
             const plugin = pluginsData?.plugins?.find(p => p.name === pluginName);
             if (!plugin || !plugin.channels) {
                 alert('Plugin not found');
@@ -694,7 +711,6 @@
             button.disabled = true;
             const originalText = button.textContent;
 
-            // Show progress bar
             const progressBar = document.getElementById(`progress-${pluginName}`);
             const progressFill = progressBar?.querySelector('.progress');
             if (progressBar) {
@@ -705,43 +721,50 @@
             const channels = plugin.channels;
             const total = channels.length;
             let completed = 0;
+            let failed = 0;
 
-            // Process channels sequentially with small delay to avoid overwhelming server
             for (const channel of channels) {
-                if (!bulkCheckRunning[pluginName]) break; // Allow cancellation
+                if (!bulkCheckRunning[pluginName]) break;
 
                 button.textContent = `Checking ${completed + 1}/${total}...`;
 
-                try {
-                    const response = await fetch(`/statplugin?action=check_channel&plugin=${pluginName}&content_id=${channel.content_id}`);
-                    const data = await response.json();
-
-                    // Update the channel row in the UI
-                    const channelDiv = document.querySelector(`.channel[data-content-id="${channel.content_id}"]`);
-                    if (channelDiv && data.status === 'success') {
-                        const statusDiv = channelDiv.querySelector('.status');
-                        if (data.available) {
-                            statusDiv.className = 'status available';
-                            statusDiv.textContent = '✓ Available';
-                        } else {
-                            statusDiv.className = 'status unavailable';
-                            statusDiv.textContent = '✗ Unavailable';
+                let success = false;
+                // Retry up to 2 times
+                for (let attempt = 0; attempt < 3 && !success; attempt++) {
+                    try {
+                        if (attempt > 0) {
+                            await new Promise(r => setTimeout(r, 500));
                         }
+
+                        const response = await fetch(`/statplugin?action=check_channel&plugin=${pluginName}&content_id=${channel.content_id}`);
+                        const data = await response.json();
+
+                        const channelDiv = document.querySelector(`.channel[data-content-id="${channel.content_id}"]`);
+                        if (channelDiv && data.status === 'success') {
+                            const statusDiv = channelDiv.querySelector('.status');
+                            if (data.available) {
+                                statusDiv.className = 'status available';
+                                statusDiv.textContent = '✓ Available';
+                            } else {
+                                statusDiv.className = 'status unavailable';
+                                statusDiv.textContent = '✗ Unavailable';
+                            }
+                            success = true;
+                        }
+                    } catch (err) {
+                        console.error(`Attempt ${attempt + 1} failed for ${channel.name}:`, err);
                     }
-                } catch (err) {
-                    console.error(`Error checking ${channel.name}:`, err);
                 }
 
+                if (!success) failed++;
                 completed++;
                 if (progressFill) {
                     progressFill.style.width = `${(completed / total) * 100}%`;
                 }
 
-                // Small delay between checks (200ms)
                 await new Promise(resolve => setTimeout(resolve, 200));
             }
 
-            // Cleanup
             bulkCheckRunning[pluginName] = false;
             button.classList.remove('running');
             button.disabled = false;
@@ -753,6 +776,10 @@
                     progressFill.style.width = '0%';
                 }, 1000);
             }
+
+            if (failed > 0) {
+                console.log(`Check completed with ${failed} failures out of ${total}`);
+            }
         }
 
         async function checkAllPeers(pluginName, button) {
@@ -760,16 +787,14 @@
                 return;
             }
 
-            // Find plugin data
             const plugin = pluginsData?.plugins?.find(p => p.name === pluginName);
             if (!plugin || !plugin.channels) {
                 alert('Plugin not found');
                 return;
             }
 
-            // Warn user about time
             const channelCount = plugin.channels.length;
-            const estimatedTime = Math.ceil(channelCount * 10 / 60); // ~10 sec per channel
+            const estimatedTime = Math.ceil(channelCount * 10 / 60);
             if (!confirm(`This will check peers for ${channelCount} channels.\nEstimated time: ${estimatedTime}+ minutes.\n\nContinue?`)) {
                 return;
             }
@@ -779,7 +804,6 @@
             button.disabled = true;
             const originalText = button.textContent;
 
-            // Show progress bar
             const progressBar = document.getElementById(`progress-${pluginName}`);
             const progressFill = progressBar?.querySelector('.progress');
             if (progressBar) {
@@ -791,59 +815,64 @@
             const total = channels.length;
             let completed = 0;
             let withPeers = 0;
+            let failed = 0;
 
-            // Process channels sequentially (peer checks take longer)
             for (const channel of channels) {
-                if (!bulkCheckRunning[`peers-${pluginName}`]) break; // Allow cancellation
+                if (!bulkCheckRunning[`peers-${pluginName}`]) break;
 
                 button.textContent = `Peers ${completed + 1}/${total} (${withPeers} online)`;
 
-                try {
-                    const response = await fetch(`/statplugin?action=check_peers&content_id=${channel.content_id}&max_wait=10`);
-                    const data = await response.json();
-
-                    // Update the channel row in the UI
-                    const channelDiv = document.querySelector(`.channel[data-content-id="${channel.content_id}"]`);
-                    if (channelDiv && data.status === 'success') {
-                        const totalPeers = data.total_peers || 0;
-                        const peers = data.peers || 0;
-                        const httpPeers = data.http_peers || 0;
-
-                        if (totalPeers > 0) withPeers++;
-
-                        // Update status
-                        const statusDiv = channelDiv.querySelector('.status');
-                        if (data.available) {
-                            statusDiv.className = 'status available';
-                            statusDiv.textContent = '✓ Available';
-                        } else {
-                            statusDiv.className = 'status unavailable';
-                            statusDiv.textContent = '✗ Unavailable';
+                let success = false;
+                // Retry up to 2 times
+                for (let attempt = 0; attempt < 3 && !success; attempt++) {
+                    try {
+                        if (attempt > 0) {
+                            await new Promise(r => setTimeout(r, 1000));
                         }
 
-                        // Update peers badge
-                        const peersInfo = channelDiv.querySelector('.peers-info');
-                        const peersClass = totalPeers > 0 ? 'has-peers' : 'no-peers';
-                        let badgeText = `${totalPeers} peers`;
-                        if (totalPeers > 0 && (peers > 0 || httpPeers > 0)) {
-                            badgeText = `${peers}P + ${httpPeers}H`;
+                        const response = await fetch(`/statplugin?action=check_peers&content_id=${channel.content_id}&max_wait=10`);
+                        const data = await response.json();
+
+                        const channelDiv = document.querySelector(`.channel[data-content-id="${channel.content_id}"]`);
+                        if (channelDiv && data.status === 'success') {
+                            const totalPeers = data.total_peers || 0;
+                            const peers = data.peers || 0;
+                            const httpPeers = data.http_peers || 0;
+
+                            if (totalPeers > 0) withPeers++;
+
+                            const statusDiv = channelDiv.querySelector('.status');
+                            if (data.available) {
+                                statusDiv.className = 'status available';
+                                statusDiv.textContent = '✓ Available';
+                            } else {
+                                statusDiv.className = 'status unavailable';
+                                statusDiv.textContent = '✗ Unavailable';
+                            }
+
+                            const peersInfo = channelDiv.querySelector('.peers-info');
+                            const peersClass = totalPeers > 0 ? 'has-peers' : 'no-peers';
+                            let badgeText = `${totalPeers} peers`;
+                            if (totalPeers > 0 && (peers > 0 || httpPeers > 0)) {
+                                badgeText = `${peers}P + ${httpPeers}H`;
+                            }
+                            peersInfo.innerHTML = `<span class="peers-badge ${peersClass}" title="P2P: ${peers}, HTTP: ${httpPeers}">${badgeText}</span>`;
+                            success = true;
                         }
-                        peersInfo.innerHTML = `<span class="peers-badge ${peersClass}" title="P2P: ${peers}, HTTP: ${httpPeers}">${badgeText}</span>`;
+                    } catch (err) {
+                        console.error(`Attempt ${attempt + 1} failed for peers ${channel.name}:`, err);
                     }
-                } catch (err) {
-                    console.error(`Error checking peers for ${channel.name}:`, err);
                 }
 
+                if (!success) failed++;
                 completed++;
                 if (progressFill) {
                     progressFill.style.width = `${(completed / total) * 100}%`;
                 }
 
-                // Small delay between peer checks (500ms)
                 await new Promise(resolve => setTimeout(resolve, 500));
             }
 
-            // Cleanup
             bulkCheckRunning[`peers-${pluginName}`] = false;
             button.classList.remove('running');
             button.disabled = false;
@@ -856,7 +885,166 @@
                 }, 1000);
             }
 
-            alert(`Peer check complete!\n${withPeers} of ${total} channels have active peers.`);
+            alert(`Peer check complete!\n${withPeers} of ${total} channels have active peers.${failed > 0 ? `\n${failed} checks failed.` : ''}`);
+        }
+
+        async function checkAndPeersAll(pluginName, button) {
+            if (bulkCheckRunning[`full-${pluginName}`]) {
+                return;
+            }
+
+            const plugin = pluginsData?.plugins?.find(p => p.name === pluginName);
+            if (!plugin || !plugin.channels) {
+                alert('Plugin not found');
+                return;
+            }
+
+            const channelCount = plugin.channels.length;
+            const estimatedTime = Math.ceil(channelCount * 12 / 60);
+            if (!confirm(`Full check (availability + peers) for ${channelCount} channels.\nEstimated time: ${estimatedTime}+ minutes.\n\nContinue?`)) {
+                return;
+            }
+
+            bulkCheckRunning[`full-${pluginName}`] = true;
+            button.classList.add('running');
+            button.disabled = true;
+            const originalText = button.textContent;
+
+            const progressBar = document.getElementById(`progress-${pluginName}`);
+            const progressFill = progressBar?.querySelector('.progress');
+            if (progressBar) {
+                progressBar.classList.add('active');
+                progressFill.style.width = '0%';
+            }
+
+            const channels = plugin.channels;
+            const total = channels.length;
+            let completed = 0;
+            let available = 0;
+            let withPeers = 0;
+            let failed = 0;
+
+            for (const channel of channels) {
+                if (!bulkCheckRunning[`full-${pluginName}`]) break;
+
+                const channelDiv = document.querySelector(`.channel[data-content-id="${channel.content_id}"]`);
+                const statusDiv = channelDiv?.querySelector('.status');
+                const peersInfo = channelDiv?.querySelector('.peers-info');
+
+                // Phase 1: Check availability
+                button.textContent = `Check ${completed + 1}/${total}...`;
+
+                if (statusDiv) {
+                    statusDiv.className = 'status checking';
+                    statusDiv.textContent = '⟳ Checking...';
+                }
+
+                let isAvailable = false;
+                let checkSuccess = false;
+
+                for (let attempt = 0; attempt < 3 && !checkSuccess; attempt++) {
+                    try {
+                        if (attempt > 0) await new Promise(r => setTimeout(r, 500));
+
+                        const response = await fetch(`/statplugin?action=check_channel&plugin=${pluginName}&content_id=${channel.content_id}`);
+                        const data = await response.json();
+
+                        if (data.status === 'success') {
+                            isAvailable = data.available;
+                            if (statusDiv) {
+                                statusDiv.className = 'status ' + (isAvailable ? 'available' : 'unavailable');
+                                statusDiv.textContent = isAvailable ? '✓ Available' : '✗ Unavailable';
+                            }
+                            if (isAvailable) available++;
+                            checkSuccess = true;
+                        }
+                    } catch (err) {
+                        console.error(`Check attempt ${attempt + 1} failed for ${channel.name}:`, err);
+                    }
+                }
+
+                // Phase 2: Check peers (only if available or check succeeded)
+                if (checkSuccess) {
+                    button.textContent = `Peers ${completed + 1}/${total}...`;
+
+                    if (peersInfo) {
+                        peersInfo.innerHTML = '<span class="peers-badge checking">...</span>';
+                    }
+
+                    let peersSuccess = false;
+                    for (let attempt = 0; attempt < 3 && !peersSuccess; attempt++) {
+                        try {
+                            if (attempt > 0) await new Promise(r => setTimeout(r, 1000));
+
+                            const response = await fetch(`/statplugin?action=check_peers&content_id=${channel.content_id}&max_wait=10`);
+                            const data = await response.json();
+
+                            if (data.status === 'success' && peersInfo) {
+                                const totalPeers = data.total_peers || 0;
+                                const peers = data.peers || 0;
+                                const httpPeers = data.http_peers || 0;
+
+                                if (totalPeers > 0) withPeers++;
+
+                                const peersClass = totalPeers > 0 ? 'has-peers' : 'no-peers';
+                                let badgeText = `${totalPeers} peers`;
+                                if (totalPeers > 0 && (peers > 0 || httpPeers > 0)) {
+                                    badgeText = `${peers}P + ${httpPeers}H`;
+                                }
+                                peersInfo.innerHTML = `<span class="peers-badge ${peersClass}" title="P2P: ${peers}, HTTP: ${httpPeers}">${badgeText}</span>`;
+
+                                // Update status from peer check (more accurate)
+                                if (statusDiv) {
+                                    if (data.available) {
+                                        statusDiv.className = 'status available';
+                                        statusDiv.textContent = '✓ Available';
+                                    } else {
+                                        statusDiv.className = 'status unavailable';
+                                        statusDiv.textContent = '✗ Unavailable';
+                                    }
+                                }
+                                peersSuccess = true;
+                            }
+                        } catch (err) {
+                            console.error(`Peers attempt ${attempt + 1} failed for ${channel.name}:`, err);
+                        }
+                    }
+
+                    if (!peersSuccess && peersInfo) {
+                        peersInfo.innerHTML = '<span class="peers-badge no-peers">Error</span>';
+                    }
+                } else {
+                    failed++;
+                    if (statusDiv) {
+                        statusDiv.className = 'status unavailable';
+                        statusDiv.textContent = '✗ Error';
+                    }
+                    if (peersInfo) {
+                        peersInfo.innerHTML = '<span class="peers-badge no-peers">-</span>';
+                    }
+                }
+
+                completed++;
+                if (progressFill) {
+                    progressFill.style.width = `${(completed / total) * 100}%`;
+                }
+
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+
+            bulkCheckRunning[`full-${pluginName}`] = false;
+            button.classList.remove('running');
+            button.disabled = false;
+            button.textContent = originalText;
+
+            if (progressBar) {
+                setTimeout(() => {
+                    progressBar.classList.remove('active');
+                    progressFill.style.width = '0%';
+                }, 1000);
+            }
+
+            alert(`Full check complete!\n\n✓ Available: ${available} of ${total}\n👥 With peers: ${withPeers} of ${total}${failed > 0 ? `\n⚠ Failed: ${failed}` : ''}`);
         }
 
         function showError(message) {
