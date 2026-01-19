@@ -11,6 +11,7 @@ __author__ = 'jocebal'
 import time
 import logging
 import gevent
+import gevent.event
 from urllib3.packages.six.moves.urllib.parse import urlparse
 from urllib3.packages.six import ensure_binary
 from requests.compat import json
@@ -37,12 +38,28 @@ class Statplugin(object):
             Statplugin.send_json_response(data, connection)
 
         elif action == 'check_channel':
-            # Check availability of a single channel
+            # Check availability of a single channel (light check - LOADASYNC only)
             plugin_name = query_get(connection.query, 'plugin')
             channel_name = query_get(connection.query, 'channel')
             content_id = query_get(connection.query, 'content_id')  # Optional: direct content_id
             self.logger.debug('[Statplugin]: check_channel request: %s/%s (content_id: %s)' % (plugin_name, channel_name or 'N/A', content_id or 'N/A'))
             data = self.check_single_channel(plugin_name, channel_name, content_id)
+            Statplugin.send_json_response(data, connection)
+
+        elif action == 'check_peers':
+            # Deep check with peer count (starts stream briefly)
+            content_id = query_get(connection.query, 'content_id')
+            max_wait = query_get(connection.query, 'max_wait')  # Optional timeout
+            if not content_id:
+                Statplugin.send_json_response({'status': 'error', 'error': 'content_id required'}, connection)
+                return
+            self.logger.info('[Statplugin]: check_peers request for %s' % content_id[:8])
+            try:
+                max_wait_sec = int(max_wait) if max_wait else 15
+                max_wait_sec = min(max(max_wait_sec, 5), 30)  # Clamp between 5-30 seconds
+            except:
+                max_wait_sec = 15
+            data = self.check_channel_peers(content_id, max_wait_sec)
             Statplugin.send_json_response(data, connection)
 
         elif action == 'get_cache':
@@ -160,7 +177,7 @@ class Statplugin(object):
                 if cached:
                     status = 'available' if cached.get('available') else 'unavailable'
 
-                channels_list.append({
+                channel_data = {
                     'name': title,
                     'content_id': content_id,
                     'logo': logo,
@@ -169,7 +186,16 @@ class Statplugin(object):
                     'infohash': cached.get('infohash', ''),
                     'tvg_id': tvg_id,
                     'group': group
-                })
+                }
+
+                # Include peer info if available in cache
+                if cached.get('peers_checked'):
+                    channel_data['peers'] = cached.get('peers', 0)
+                    channel_data['http_peers'] = cached.get('http_peers', 0)
+                    channel_data['total_peers'] = cached.get('total_peers', 0)
+                    channel_data['status_text'] = cached.get('status_text', '')
+
+                channels_list.append(channel_data)
 
             return channels_list
 
@@ -216,14 +242,23 @@ class Statplugin(object):
             if hasattr(plugin, 'picons') and plugin.picons:
                 logo = plugin.picons.get(channel_name, '')
 
-            channels_list.append({
+            channel_data = {
                 'name': channel_name,
                 'content_id': content_id,
                 'logo': logo,
                 'status': status,
                 'last_check': cached.get('checked_at'),
                 'infohash': cached.get('infohash', ''),
-            })
+            }
+
+            # Include peer info if available in cache
+            if cached.get('peers_checked'):
+                channel_data['peers'] = cached.get('peers', 0)
+                channel_data['http_peers'] = cached.get('http_peers', 0)
+                channel_data['total_peers'] = cached.get('total_peers', 0)
+                channel_data['status_text'] = cached.get('status_text', '')
+
+            channels_list.append(channel_data)
 
         if skipped > 0:
             self.logger.info('[Statplugin]: %d channels skipped (HTTP or invalid)' % skipped)
@@ -300,6 +335,65 @@ class Statplugin(object):
             self.logger.error('[Statplugin]: Error checking channel: %s' % repr(e))
             return {'status': 'error', 'error': str(e)}
 
+    def check_channel_peers(self, content_id, max_wait=15):
+        '''
+        Check channel availability with peer count information
+        Starts stream briefly to get real peer data
+        Returns: {status, available, peers, http_peers, total_peers, status_text, error}
+        '''
+        try:
+            # Check if already in cache and fresh (< 2 minutes for peer checks)
+            cached = self.channel_status_cache.get(content_id)
+            if cached and cached.get('peers_checked') and (time.time() - cached.get('peers_checked_at', 0)) < 120:
+                self.logger.debug('[Statplugin]: Using cached peer result for %s' % content_id[:8])
+                return {
+                    'status': 'success',
+                    'cached': True,
+                    'available': cached.get('available', False),
+                    'peers': cached.get('peers', 0),
+                    'http_peers': cached.get('http_peers', 0),
+                    'total_peers': cached.get('total_peers', 0),
+                    'status_text': cached.get('status_text', 'unknown'),
+                    'checked_at': cached.get('peers_checked_at')
+                }
+
+            # Perform deep check with peers
+            result = self._check_with_peers(content_id, max_wait)
+
+            # Update cache with peer info
+            if content_id not in self.channel_status_cache:
+                self.channel_status_cache[content_id] = {}
+
+            self.channel_status_cache[content_id].update({
+                'available': result.get('available', False),
+                'peers': result.get('peers', 0),
+                'http_peers': result.get('http_peers', 0),
+                'total_peers': result.get('total_peers', 0),
+                'status_text': result.get('status_text', 'unknown'),
+                'infohash': result.get('infohash', ''),
+                'peers_checked': True,
+                'peers_checked_at': time.time(),
+                'checked_at': time.time(),
+                'error': result.get('error', None)
+            })
+
+            return {
+                'status': 'success',
+                'cached': False,
+                'available': result.get('available', False),
+                'peers': result.get('peers', 0),
+                'http_peers': result.get('http_peers', 0),
+                'total_peers': result.get('total_peers', 0),
+                'status_text': result.get('status_text', 'unknown'),
+                'infohash': result.get('infohash', ''),
+                'checked_at': time.time(),
+                'error': result.get('error')
+            }
+
+        except Exception as e:
+            self.logger.error('[Statplugin]: Error checking peers for %s: %s' % (content_id[:8], repr(e)))
+            return {'status': 'error', 'error': str(e)}
+
     def _check_availability_light(self, content_id):
         '''
         Light availability check using LOADASYNC
@@ -359,6 +453,143 @@ class Statplugin(object):
             self.logger.error('[Statplugin]: Error checking content_id %s: %s' % (content_id[:8], repr(e)))
             return {
                 'available': False,
+                'error': str(e)
+            }
+
+    def _check_with_peers(self, content_id, max_wait=15):
+        '''
+        Deep availability check that starts stream briefly to get peer count
+        Starts streaming, waits for STATUS messages with peer info, then stops
+        Returns: {available: bool, peers: int, http_peers: int, status_text: str, error: str}
+        '''
+        ace = None
+        try:
+            import aceclient
+            import aceclient.acemessages
+
+            # Prepare parameters for AceClient
+            params = {
+                'ace': self.AceConfig.ace,
+                'acekey': self.AceConfig.acekey,
+                'acesex': self.AceConfig.acesex,
+                'aceage': self.AceConfig.aceage,
+                'connect_timeout': self.AceConfig.aceconntimeout,
+                'result_timeout': self.AceConfig.aceresulttimeout,
+                'videoseekback': 0,  # No seekback for check
+                'videotimeout': max_wait,  # Use shorter timeout for check
+                'stream_type': ' '.join(['{}={}'.format(k,v) for k,v in self.AceConfig.acestreamtype.items()]),
+                'sessionID': '0',
+                'connectionTime': time.time(),
+                'clientDetail': None,
+                'channelIcon': 'http://static.acestream.net/sites/acestream/img/ACE-logo.png',
+                'content_id': content_id
+            }
+
+            # Add START_PARAMS
+            for param in aceclient.acemessages.AceConst.START_PARAMS:
+                params[param] = '0'
+
+            self.logger.info('[Statplugin]: Starting peer check for %s' % content_id[:8])
+
+            # Create AceClient and authenticate
+            ace = aceclient.AceClient(params)
+            ace._title = 'PeerCheck_%s' % content_id[:8]
+            ace.GetAUTH()
+
+            # Get content info first (LOADASYNC)
+            loadresp = ace.GetLOADASYNC({'content_id': content_id, 'sessionID': params['sessionID']})
+            status = loadresp.get('status', 0)
+
+            if status not in (1, 2):
+                # Content not available
+                ace.ShutdownAce()
+                return {
+                    'available': False,
+                    'peers': 0,
+                    'http_peers': 0,
+                    'status_text': 'Content not found',
+                    'error': loadresp.get('message', 'Status %d' % status)
+                }
+
+            infohash = loadresp.get('infohash', '')
+
+            # Start the stream to get peer info
+            start_params = {
+                'content_id': content_id,
+                'file_indexes': '0',
+                'stream_type': params['stream_type']
+            }
+
+            self.logger.debug('[Statplugin]: Sending START for peer check')
+
+            # Send START command manually (we don't need the URL, just STATUS)
+            ace._response['START'] = gevent.event.AsyncResult()
+            ace._write(aceclient.acemessages.AceRequest.START(start_params))
+
+            # Collect STATUS messages for peer info
+            peers = 0
+            http_peers = 0
+            status_text = 'IDLE'
+            status_collected = False
+
+            # Wait for STATUS updates (up to max_wait seconds)
+            start_time = time.time()
+            while (time.time() - start_time) < max_wait:
+                try:
+                    status_data = ace.GetSTATUS()
+                    if status_data and status_data.get('status') != 'error':
+                        peers = int(status_data.get('peers', 0))
+                        http_peers = int(status_data.get('http_peers', 0))
+                        status_text = status_data.get('status', 'unknown')
+                        self.logger.debug('[Statplugin]: STATUS - peers=%d, http_peers=%d, status=%s' % (peers, http_peers, status_text))
+
+                        # If we got any peers, or stream is downloading, we have enough info
+                        if peers > 0 or http_peers > 0 or status_text in ('dl', 'prebuf', 'buf'):
+                            status_collected = True
+                            break
+
+                        # If checking/idle for too long with no peers, stop
+                        if (time.time() - start_time) > 5 and status_text in ('check', 'idle'):
+                            status_collected = True
+                            break
+                except:
+                    break
+
+                gevent.sleep(0.5)
+
+            # Stop broadcast and shutdown
+            self.logger.debug('[Statplugin]: Stopping peer check stream')
+            ace.StopBroadcast()
+            gevent.sleep(0.2)
+            ace.ShutdownAce()
+
+            total_peers = peers + http_peers
+            available = total_peers > 0 or status_text in ('dl', 'prebuf', 'buf')
+
+            self.logger.info('[Statplugin]: Peer check complete for %s - peers=%d, http_peers=%d, status=%s' %
+                           (content_id[:8], peers, http_peers, status_text))
+
+            return {
+                'available': available,
+                'peers': peers,
+                'http_peers': http_peers,
+                'total_peers': total_peers,
+                'infohash': infohash,
+                'status_text': status_text,
+                'status_collected': status_collected
+            }
+
+        except Exception as e:
+            self.logger.error('[Statplugin]: Error in peer check for %s: %s' % (content_id[:8], repr(e)))
+            if ace:
+                try:
+                    ace.ShutdownAce()
+                except:
+                    pass
+            return {
+                'available': False,
+                'peers': 0,
+                'http_peers': 0,
                 'error': str(e)
             }
 
