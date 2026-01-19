@@ -1,94 +1,548 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="description" content="HTTP AceProxy state panel" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="HTTPAceProxy Statistics Dashboard">
+    <title>HTTPAceProxy - Statistics</title>
+    <link rel="shortcut icon" href="/stat/img/shesterenka.png" type="image/png">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
 
-        <title>AceProxy stat info</title>
-        <script src="/stat/js/jquery_v3.3.1.min.js"></script>
-        <script src="/stat/js/popper_v1.14.6.min.js"></script>
-        <script src="/stat/js/bootstrap_v4.1.1.min.js"></script>
-        <link rel="shortcut icon" href="/stat/img/shesterenka.png" type="image/png" />
-        <link rel="stylesheet" href="/stat/css/bootstrap_v4.1.1.min.css" type="text/css" />
-        <link rel="stylesheet" href="/stat/css/index.css" type="text/css" />
-        <link rel="stylesheet" href="/stat/css/flags16.css" type="text/css" />
-        <!--link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous"-->
-        <script src="/stat/js/index.js"></script>
-    </head>
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+        .header h1 {
+            font-size: 36px;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            margin-bottom: 10px;
+        }
+        .header-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        .header-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .header-link:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+        .header-link svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+        }
 
-    <body>
-        <nav class="header">
-            <div class="header-block">
-                <div class="row align-items-end">
+        /* Stats Grid */
+        .stats {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+        }
+        .stat-box {
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            text-align: center;
+            color: white;
+        }
+        .stat-box.green { background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); }
+        .stat-box.orange { background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); }
+        .stat-box.blue { background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); }
+        .stat-box .label { font-size: 12px; opacity: 0.9; margin-bottom: 6px; }
+        .stat-box .value { font-size: 24px; font-weight: bold; }
+        .stat-box .sub { font-size: 11px; opacity: 0.8; margin-top: 4px; }
 
-                    <div class="info-block col-4 invisible transparent">
-                        <h6>SYSTEM INFO :</h6>
-                        <div class="sys-info">
-                            <div>OS
-                                <span id="inf_os">n/a</span>
-                            </div>
-                            <div class="d-inline-block">CPU
-                                <span id="inf_cpu_cores">cores: n/a</span>
-                            </div>
-                            <div  class="d-inline-block">
-                                <span id="inf_cpu_used">used: n/a</span>
-                                <span class="d-none" id="inf_cpu_freq">freq: n/a</span>
-                            </div></br>
-                            <div class="d-none" id="inf_temp">CPU Temperature: n/a</div>
-                            <div class="d-inline-block">RAM
-                                <span id="inf_ram_total">total: n/a</span>
-                            </div>
-                            <div class="d-inline-block">
-                                <span id="inf_ram_used">used: n/a</span>
-                                <span id="inf_ram_free">free: n/a</span>
-                            </div></br>
-                            <div class="d-inline-block">DISK
-                                <span id="inf_disk_total">total: n/a</span>
-                            </div>
-                            <div class="d-inline-block">
-                                <span id="inf_disk_used">used: n/a</span>
-                                <span id="inf_disk_free">free: n/a</span>
-                            </div>
-                        </div>
-                    </div>
+        /* System Info Panel */
+        .system-panel {
+            background: white;
+            padding: 20px 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .system-panel h3 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        .system-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .system-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        .system-item .label { color: #666; }
+        .system-item .value { font-weight: 600; color: #333; }
 
-                    <div class="heder-title col-4">
-                        <h1 class="text-center">HTTP AceProxy</h1>
-                        <p class="text-center">
-                            <a class="home-link" href="https://github.com/pepsik-kiev/HTTPAceProxy" target="_blank">Project home page on GitHub</a>
-                        </p>
-                        <p class="text-center">
-                            <a class="home-link" href="https://forumtv.site/threads/http-proksi-dlja-ace-stream.111/" target="_blank">Forum HTTPAceProxy</a>
-                        </p>
-                    </div>
+        /* Clients Table */
+        .clients-panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .clients-header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 20px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .clients-header h2 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        .clients-header .count {
+            background: rgba(255,255,255,0.25);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .clients-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .clients-table thead {
+            background: #f8f9fa;
+        }
+        .clients-table th {
+            padding: 14px 16px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .clients-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+            vertical-align: middle;
+        }
+        .clients-table tr:hover {
+            background: #f8f9fa;
+        }
+        .clients-table tr:last-child td {
+            border-bottom: none;
+        }
+        .channel-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .channel-icon {
+            width: 40px;
+            height: 30px;
+            object-fit: contain;
+            border-radius: 4px;
+            background: #f0f0f0;
+        }
+        .channel-name {
+            font-weight: 500;
+            color: #333;
+        }
+        .client-ip {
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            color: #666;
+        }
+        .speed-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Monaco', monospace;
+            font-size: 12px;
+        }
+        .speed-down { color: #4CAF50; }
+        .speed-up { color: #2196F3; }
+        .speed-arrow {
+            width: 12px;
+            height: 12px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status-badge.dl { background: #d4edda; color: #155724; }
+        .status-badge.buf { background: #fff3cd; color: #856404; }
+        .status-badge.prebuf { background: #f8d7da; color: #721c24; }
+        .status-badge.wait { background: #f8d7da; color: #721c24; }
+        .status-badge.check { background: #cce5ff; color: #004085; }
+        .status-badge.idle { background: #e2e3e5; color: #383d41; }
+        .status-badge.loading { background: #cce5ff; color: #004085; }
+        .peers-cell {
+            text-align: center;
+        }
+        .peers-count {
+            font-weight: 600;
+            color: #333;
+            margin-right: 8px;
+        }
 
-                    <div class="status-connection col-4 text-right invisible transparent">
-                        <div class="status-connection-col">Connections limit: <span id="connection_info_lim">-</span></div>
-                        <div class="status-connection-col">Connected clients: <span id="connection_info_cli">-</span></div>
-                    </div>
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        .empty-state h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        /* Error state */
+        .error-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #721c24;
+            background: #f8d7da;
+            border-radius: 8px;
+            margin: 20px;
+            display: none;
+        }
+
+        /* Loading state */
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: white;
+            font-size: 18px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 { font-size: 28px; }
+            .clients-table { font-size: 12px; }
+            .clients-table th, .clients-table td { padding: 10px 12px; }
+            .channel-icon { width: 30px; height: 22px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>HTTPAceProxy</h1>
+            <p style="opacity: 0.9; font-size: 14px;">Real-time Statistics Dashboard</p>
+            <div class="header-links">
+                <a href="/statplugin" target="_blank" class="header-link">
+                    <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>
+                    Plugin Channels
+                </a>
+                <a href="https://github.com/jopsis/HTTPAceProxy" target="_blank" class="header-link">
+                    <svg viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                    GitHub
+                </a>
+                <a href="https://hub.docker.com/r/jopsis/httpaceproxy" target="_blank" class="header-link">
+                    <svg viewBox="0 0 24 24"><path d="M13.983 11.078h2.119a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.119a.185.185 0 00-.185.185v1.888c0 .102.083.185.185.185m-2.954-5.43h2.118a.186.186 0 00.186-.186V3.574a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.186m0 2.716h2.118a.187.187 0 00.186-.186V6.29a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.887c0 .102.082.185.185.186m-2.93 0h2.12a.186.186 0 00.184-.186V6.29a.185.185 0 00-.185-.185H8.1a.185.185 0 00-.185.185v1.887c0 .102.083.185.185.186m-2.964 0h2.119a.186.186 0 00.185-.186V6.29a.185.185 0 00-.185-.185H5.136a.186.186 0 00-.186.185v1.887c0 .102.084.185.186.186m5.893 2.715h2.118a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m-2.93 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.083.185.185.185m-2.964 0h2.119a.185.185 0 00.185-.185V9.006a.185.185 0 00-.185-.186h-2.119a.185.185 0 00-.185.185v1.888c0 .102.083.185.185.185m-2.92 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.186.186 0 00-.185.185v1.888c0 .102.084.185.185.185M23.763 9.89c-.065-.051-.672-.51-1.954-.51-.338.001-.676.03-1.01.087-.248-1.7-1.653-2.53-1.716-2.566l-.344-.199-.226.327c-.284.438-.49.922-.612 1.43-.23.97-.09 1.882.403 2.661-.595.332-1.55.413-1.744.42H.751a.751.751 0 00-.75.748 11.376 11.376 0 00.692 4.062c.545 1.428 1.355 2.48 2.41 3.124 1.18.723 3.1 1.137 5.275 1.137.983.003 1.963-.086 2.93-.266a12.248 12.248 0 003.823-1.389c.98-.567 1.86-1.288 2.61-2.136 1.252-1.418 1.998-2.997 2.553-4.4h.221c1.372 0 2.215-.549 2.68-1.009.309-.293.55-.65.707-1.046l.098-.288z"/></svg>
+                    Docker Hub
+                </a>
+            </div>
+        </div>
+
+        <!-- Connection Stats -->
+        <div class="stats">
+            <div class="stats-grid">
+                <div class="stat-box green">
+                    <div class="label">Connected Clients</div>
+                    <div class="value" id="total-clients">-</div>
+                    <div class="sub">of <span id="max-clients">-</span> max</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">CPU Usage</div>
+                    <div class="value" id="cpu-usage">-</div>
+                    <div class="sub" id="cpu-cores">- cores</div>
+                </div>
+                <div class="stat-box orange">
+                    <div class="label">RAM Used</div>
+                    <div class="value" id="ram-used">-</div>
+                    <div class="sub">of <span id="ram-total">-</span></div>
+                </div>
+                <div class="stat-box blue">
+                    <div class="label">Disk Used</div>
+                    <div class="value" id="disk-used">-</div>
+                    <div class="sub">of <span id="disk-total">-</span></div>
                 </div>
             </div>
-        </nav>
+        </div>
 
-        <main role="main" class="container" style="margin-top: 30px">
-            <div class="f16 container container-fluid">
-                <table class="table table-sm table-bordered table-hover">
-                    <thead class="thead-light text-center">
+        <!-- System Info -->
+        <div class="system-panel" id="system-panel" style="display:none;">
+            <h3>System Information</h3>
+            <div class="system-grid">
+                <div class="system-item">
+                    <span class="label">Platform</span>
+                    <span class="value" id="os-platform">-</span>
+                </div>
+                <div class="system-item">
+                    <span class="label">CPU Frequency</span>
+                    <span class="value" id="cpu-freq">-</span>
+                </div>
+                <div class="system-item">
+                    <span class="label">RAM Available</span>
+                    <span class="value" id="ram-available">-</span>
+                </div>
+                <div class="system-item">
+                    <span class="label">Disk Free</span>
+                    <span class="value" id="disk-free">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Clients Table -->
+        <div class="clients-panel">
+            <div class="clients-header">
+                <h2>Active Connections</h2>
+                <span class="count" id="clients-count">0 clients</span>
+            </div>
+            <div id="clients-container">
+                <div class="empty-state" id="empty-state">
+                    <h3>No active connections</h3>
+                    <p>Clients will appear here when they connect to watch streams.</p>
+                </div>
+                <table class="clients-table" id="clients-table" style="display:none;">
+                    <thead>
                         <tr>
-                            <th scope="col">Channel name</th>
-                            <th scope="col">Client IP</th>
-                            <th scope="col">Client/Location</th>
-                            <th scope="col">Start time</th>
-                            <th scope="col">Duration</th>
-                            <th scope="col">Speed kB/s</th>
-                            <th scope="col">Peers<button type="button" class="btn btn-help btn-primary" data-toggle="popover">?</button></th>
+                            <th>Channel</th>
+                            <th>Client IP</th>
+                            <th>Location</th>
+                            <th>Started</th>
+                            <th>Duration</th>
+                            <th>Speed</th>
+                            <th>Peers / Status</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="clients-tbody">
                     </tbody>
                 </table>
             </div>
-            <h1 id="error_resp_mess" class="text-center">Server not responding! Refresh page!!!</h1>
-        </main>
-    </body>
+            <div class="error-state" id="error-state">
+                Server not responding! Refresh page...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Status polling
+        let statusInterval;
+
+        function getStatus() {
+            fetch('/stat/?action=get_status')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        renderPage(data);
+                        document.getElementById('error-state').style.display = 'none';
+                    }
+                })
+                .catch(err => {
+                    console.error('Status error:', err);
+                    document.getElementById('error-state').style.display = 'block';
+                });
+        }
+
+        function renderPage(data) {
+            // System info
+            const sys = data.sys_info;
+            const conn = data.connection_info;
+
+            document.getElementById('total-clients').textContent = conn.total_clients;
+            document.getElementById('max-clients').textContent = conn.max_clients;
+            document.getElementById('clients-count').textContent = conn.total_clients + ' client' + (conn.total_clients !== 1 ? 's' : '');
+
+            // CPU
+            const cpuPercent = sys.cpu_percent.reduce((a, b) => a + b, 0) / sys.cpu_nums;
+            document.getElementById('cpu-usage').textContent = cpuPercent.toFixed(0) + '%';
+            document.getElementById('cpu-cores').textContent = sys.cpu_nums + ' cores';
+
+            // RAM
+            document.getElementById('ram-used').textContent = bytes2human(sys.mem_info.used);
+            document.getElementById('ram-total').textContent = bytes2human(sys.mem_info.total);
+            document.getElementById('ram-available').textContent = bytes2human(sys.mem_info.available);
+
+            // Disk
+            document.getElementById('disk-used').textContent = bytes2human(sys.disk_info.used);
+            document.getElementById('disk-total').textContent = bytes2human(sys.disk_info.total);
+            document.getElementById('disk-free').textContent = bytes2human(sys.disk_info.free);
+
+            // Platform
+            document.getElementById('os-platform').textContent = sys.os_platform;
+            if (sys.cpu_freq && sys.cpu_freq.current) {
+                document.getElementById('cpu-freq').textContent = sys.cpu_freq.current.toFixed(0) + ' MHz';
+            }
+
+            // Show system panel
+            document.getElementById('system-panel').style.display = 'block';
+
+            // Clients table
+            renderClients(data.clients_data);
+        }
+
+        function renderClients(clients) {
+            const tbody = document.getElementById('clients-tbody');
+            const table = document.getElementById('clients-table');
+            const empty = document.getElementById('empty-state');
+
+            if (!clients || clients.length === 0) {
+                table.style.display = 'none';
+                empty.style.display = 'block';
+                return;
+            }
+
+            table.style.display = 'table';
+            empty.style.display = 'none';
+
+            // Build rows
+            const existingRows = {};
+            tbody.querySelectorAll('tr').forEach(row => {
+                existingRows[row.id] = row;
+            });
+
+            const currentIds = new Set();
+
+            clients.forEach(client => {
+                const rowId = 'client-' + client.sessionID;
+                currentIds.add(rowId);
+
+                let row = existingRows[rowId];
+                const statusClass = getStatusClass(client.stat?.status);
+                const statusText = client.stat?.status || 'n/a';
+                const peers = client.stat?.peers ?? '-';
+                const speedDown = client.stat?.speed_down ?? '-';
+                const speedUp = client.stat?.speed_up ?? '-';
+
+                const clientLocation = client.clientInfo?.vendor ||
+                    (client.clientInfo?.country_name ?
+                        `${client.clientInfo.country_name}, ${client.clientInfo.city || 'Unknown'}` :
+                        'Local');
+
+                if (!row) {
+                    row = document.createElement('tr');
+                    row.id = rowId;
+                    row.innerHTML = `
+                        <td class="channel-cell">
+                            <img src="${client.channelIcon || '/stat/img/shesterenka.png'}" class="channel-icon" onerror="this.src='/stat/img/shesterenka.png'">
+                            <span class="channel-name">${escapeHtml(client.channelName || 'Unknown')}</span>
+                        </td>
+                        <td class="client-ip">${client.clientIP}</td>
+                        <td>${escapeHtml(clientLocation)}</td>
+                        <td>${client.startTime}</td>
+                        <td class="duration">${client.durationTime}</td>
+                        <td class="speed-cell">
+                            <span class="speed-down">${speedDown}</span>
+                            <svg class="speed-arrow" viewBox="0 0 24 24" fill="#4CAF50"><path d="M7 10l5 5 5-5z"/></svg>
+                            <svg class="speed-arrow" viewBox="0 0 24 24" fill="#2196F3"><path d="M7 14l5-5 5 5z"/></svg>
+                            <span class="speed-up">${speedUp}</span>
+                        </td>
+                        <td class="peers-cell">
+                            <span class="peers-count">${peers}</span>
+                            <span class="status-badge ${statusClass}">${statusText}</span>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                } else {
+                    // Update existing row
+                    row.querySelector('.duration').textContent = client.durationTime;
+                    row.querySelector('.speed-down').textContent = speedDown;
+                    row.querySelector('.speed-up').textContent = speedUp;
+                    row.querySelector('.peers-count').textContent = peers;
+                    const badge = row.querySelector('.status-badge');
+                    badge.className = 'status-badge ' + statusClass;
+                    badge.textContent = statusText;
+                }
+            });
+
+            // Remove disconnected clients
+            Object.keys(existingRows).forEach(id => {
+                if (!currentIds.has(id)) {
+                    existingRows[id].remove();
+                }
+            });
+        }
+
+        function getStatusClass(status) {
+            const classes = {
+                'dl': 'dl',
+                'buf': 'buf',
+                'prebuf': 'prebuf',
+                'wait': 'wait',
+                'check': 'check',
+                'idle': 'idle',
+                'loading': 'loading'
+            };
+            return classes[status] || 'idle';
+        }
+
+        function bytes2human(size) {
+            if (!size) return '0 B';
+            const i = size === 0 ? 0 : Math.floor(Math.log(size) / Math.log(1024));
+            return (size / Math.pow(1024, i)).toFixed(1) + ' ' + ['B', 'KB', 'MB', 'GB', 'TB'][i];
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Start polling
+        getStatus();
+        statusInterval = setInterval(getStatus, 2000);
+    </script>
+</body>
 </html>

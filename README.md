@@ -50,15 +50,16 @@ Once running, access HTTPAceProxy at:
 http://localhost:8888
 ```
 
-**Statistics Dashboard:**
+**Dashboards:**
 ```
-http://localhost:8888/stat
+http://localhost:8888/stat          # Real-time statistics
+http://localhost:8888/statplugin    # Channel browser with peer checking
 ```
 
 **Playlists:**
 ```
 http://localhost:8888/newera.m3u8   (322 sports channels)
-http://localhost:8888/elcano.m3u8   (68 curated channels)
+http://localhost:8888/elcano.m3u8   (71 curated channels)
 ```
 
 ## 📖 Documentation
@@ -143,8 +144,9 @@ maxconns = 10              # Maximum total client connections (default: 10)
 | Plugin | Channels | Description | Source |
 |--------|----------|-------------|--------|
 | **NewEra** | 322 | Sports channels (La Liga, Champions, DAZN, NBA, F1, etc.) | IPFS |
-| **Elcano** | 68 | Curated sports selection | IPFS |
+| **Elcano** | 71 | Curated sports selection | IPFS |
 | **Stat** | - | Real-time statistics and monitoring dashboard | Built-in |
+| **StatPlugin** | - | Channel browser with availability & peer checking | Built-in |
 
 ## 🛠️ Requirements
 
@@ -233,20 +235,42 @@ HTTPAceProxy works behind reverse proxies. See detailed guides:
 
 **Important:** Disable HTTP/2 and buffering for best streaming performance.
 
-## 📊 Monitoring
+## 📊 Monitoring & Dashboards
 
-Access real-time statistics at `/stat`:
+HTTPAceProxy provides two modern web dashboards for monitoring:
+
+### Statistics Dashboard (`/stat`)
 
 ```
 http://localhost:8888/stat
 ```
 
-**Displays:**
+Real-time system monitoring with:
 - Active connections and client IPs
 - System resources (CPU, RAM, disk)
 - Download/upload speeds per client
-- Connection duration
-- Peer statistics
+- Connection duration and peer statistics
+- Auto-refresh every 2 seconds
+
+### Plugin Channels Dashboard (`/statplugin`)
+
+```
+http://localhost:8888/statplugin
+```
+
+Browse and check all available channels with:
+- **Channel List**: All channels from all plugins
+- **Availability Check**: Verify if content exists (fast check)
+- **Peer Check**: Start stream briefly to count active peers (deep check)
+- **Bulk Operations**: "Check All" and "Peers All" buttons per plugin
+- **Filter**: Search channels by name
+- **Cache**: Results cached for faster subsequent checks
+
+**Features:**
+- Check individual channels or entire plugins at once
+- Visual indicators: Available (green), Unavailable (red), Unknown (gray)
+- Peer count display: P2P peers + HTTP peers
+- Progress bar for bulk operations
 
 ## 🔧 Troubleshooting
 
@@ -337,12 +361,14 @@ This software is provided for legitimate uses only. The authors are not responsi
 ## 📈 Project Statistics
 
 - **Language:** Python 3.11
-- **Lines of Code:** ~8,400
-- **Active Plugins:** 3 (NewEra, Elcano, Stat)
+- **Lines of Code:** ~9,000+
+- **Active Plugins:** 4 (NewEra, Elcano, Stat, StatPlugin)
+- **Available Channels:** 390+ (322 NewEra + 71 Elcano)
 - **Concurrent Channels:** Up to 5 different streams simultaneously
 - **Multi-Client:** Unlimited clients per channel
 - **Supported Architectures:** AMD64, ARM64
 - **Docker Image Size:** ~200MB
+- **Web Dashboards:** 2 (Statistics + Channel Browser)
 
 ---
 
