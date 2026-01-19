@@ -1,8 +1,31 @@
 # Configurar conexión a Ace Stream Engine
 
-HTTPAceProxy necesita conectarse a un Ace Stream Engine. Aquí te explico cómo configurarlo según dónde esté corriendo tu Ace Stream Engine.
+HTTPAceProxy necesita conectarse a un Ace Stream Engine. Aquí te explico cómo configurarlo según dónde esté corriendo tu motor.
 
-## 🔍 ¿Dónde está tu Ace Stream Engine?
+## ⭐ Opción Recomendada: AceServe (All-in-One)
+
+La forma más fácil es usar AceServe, un motor Ace Stream ligero en Docker:
+
+```bash
+# Usar docker-compose-aio.yml (incluye HTTPAceProxy + AceServe)
+curl -O https://raw.githubusercontent.com/jopsis/HTTPAceProxy/master/docker-compose-aio.yml
+
+# Editar para seleccionar tu arquitectura (x64 está descomentado por defecto)
+nano docker-compose-aio.yml
+
+# Iniciar todo
+docker-compose -f docker-compose-aio.yml up -d
+```
+
+**Ventajas de AceServe:**
+- ✅ Todo incluido, sin configuración adicional
+- ✅ Optimizado y más ligero que el motor oficial
+- ✅ Soporta x64, ARM64 (Raspberry Pi 4) y ARM32 (Raspberry Pi 3)
+- ✅ Imágenes mantenidas: `jopsis/aceserve:x64-latest`, `arm64-latest`, `arm32-latest`
+
+**Con esta opción no necesitas configurar nada más.** Si prefieres usar tu propio motor Ace Stream, continúa leyendo:
+
+## 🔍 Usar tu propio Ace Stream Engine
 
 ### Opción 1: En la misma máquina (Docker Desktop - Mac/Windows)
 

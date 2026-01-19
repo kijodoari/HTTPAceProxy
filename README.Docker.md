@@ -7,6 +7,36 @@ Configuración Docker para HTTPAceProxy con el plugin NewEra.
 - Docker Engine 20.10+
 - Docker Compose 2.0+ (opcional, pero recomendado)
 
+## Opción 0: All-in-One con AceServe (Más Fácil)
+
+La forma más sencilla es usar `docker-compose-aio.yml` que incluye HTTPAceProxy + AceServe (motor Ace Stream ligero):
+
+```bash
+# Descargar el archivo compose
+curl -O https://raw.githubusercontent.com/jopsis/HTTPAceProxy/master/docker-compose-aio.yml
+
+# Editar para descomentar tu arquitectura (x64 por defecto)
+# - x64-latest: AMD64/Intel
+# - arm64-latest: Raspberry Pi 4, Apple Silicon
+# - arm32-latest: Raspberry Pi 3 y anteriores
+
+# Iniciar ambos servicios
+docker-compose -f docker-compose-aio.yml up -d
+
+# Ver logs
+docker-compose -f docker-compose-aio.yml logs -f
+
+# Acceder
+# http://localhost:8888/stat
+# http://localhost:8888/statplugin
+```
+
+**Ventajas:**
+- Todo incluido (proxy + motor)
+- No necesitas Ace Stream Engine instalado separadamente
+- Optimizado y más ligero que el motor oficial
+- Soporta x64, ARM64 y ARM32
+
 ## Opción 1: Usando Docker Compose (Recomendado)
 
 ### Construcción e inicio rápido
@@ -138,14 +168,16 @@ docker-compose logs -f httpaceproxy
 docker-compose exec httpaceproxy /bin/bash
 ```
 
-### Verificar que AceStream está accesible
+### Verificar que AceServe/AceStream está accesible
 
-El contenedor necesita acceso a un motor de Ace Stream. Por defecto busca en `127.0.0.1:62062`.
+El contenedor necesita acceso a un motor de Ace Stream (AceServe o Ace Stream Engine). Por defecto busca en `127.0.0.1:62062`.
 
-Si tu Ace Stream Engine está en otro host:
+**Opción recomendada:** Usar AceServe con docker-compose-aio.yml (incluye motor y proxy).
+
+Si tu motor está en otro host:
 
 1. Edita `aceconfig.py`
-2. Cambia la configuración `ace = {'aceHostIP': 'IP_DE_ACESTREAM', ...}`
+2. Cambia la configuración `ace = {'aceHostIP': 'IP_DEL_MOTOR', ...}`
 3. Reinicia el contenedor
 
 ### El contenedor no arranca

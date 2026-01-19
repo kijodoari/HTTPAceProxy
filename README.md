@@ -33,15 +33,22 @@ docker run -d \
   jopsis/httpaceproxy:latest
 ```
 
-#### 2. All-in-One (HTTPAceProxy + Ace Stream Engine)
+#### 2. All-in-One (HTTPAceProxy + AceServe Engine)
+
+Complete solution with HTTPAceProxy and AceServe (lightweight Ace Stream Engine):
 
 ```bash
 # Download compose file
 curl -O https://raw.githubusercontent.com/jopsis/HTTPAceProxy/master/docker-compose-aio.yml
 
-# Start services
+# Start services (automatically selects x64, arm64, or arm32 image)
 docker-compose -f docker-compose-aio.yml up -d
 ```
+
+**AceServe Images:**
+- `jopsis/aceserve:x64-latest` - AMD64/Intel systems
+- `jopsis/aceserve:arm64-latest` - ARM64 (Raspberry Pi 4, Apple Silicon)
+- `jopsis/aceserve:arm32-latest` - ARM32 (Raspberry Pi 3 and older)
 
 ### Access
 
@@ -156,6 +163,8 @@ maxconns = 10              # Maximum total client connections (default: 10)
   - psutil >= 7.2.1
   - requests >= 2.32.0
 - **Ace Stream Engine:** Required (local or remote)
+  - **Recommended:** AceServe (lightweight Docker image by jopsis)
+  - Alternative: Official Ace Stream Engine
 
 ## 🏗️ Installation Methods
 

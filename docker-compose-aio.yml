@@ -1,35 +1,35 @@
 services:
-  ## Uncomment the appropriate acestream service based on your system architecture
-  ## For x64 systems:
-  # acestream:
-  #   image: jopsis/acestream:x64
-  #   platform: linux/amd64
-  #   container_name: acestream-engine
-  #   ports:
-  #     - "6878:6878"    # AceStream HTTP port (expuesto externamente)
-  #     - "62062:62062"  # AceStream API port (corregido)
-  #   restart: unless-stopped
-  #   networks:
-  #     - aceproxy-net
-  ## For ARM64 systems:
-  # acestream:
-  #   image: jopsis/acestream:arm64-v3.2.14
+  ## Uncomment the appropriate aceserve service based on your system architecture
+  ## For x64 systems (AMD64/Intel):
+  aceserve:
+    image: jopsis/aceserve:x64-latest
+    platform: linux/amd64
+    container_name: aceserve-engine
+    ports:
+      - "6878:6878"    # AceStream HTTP port
+      - "62062:62062"  # AceStream API port
+    restart: unless-stopped
+    networks:
+      - aceproxy-net
+  ## For ARM64 systems (Raspberry Pi 4, Apple Silicon):
+  # aceserve:
+  #   image: jopsis/aceserve:arm64-latest
   #   platform: linux/arm64
-  #   container_name: acestream-engine
+  #   container_name: aceserve-engine
   #   ports:
-  #     - "6878:6878"    # AceStream HTTP port (expuesto externamente)
-  #     - "62062:62062"  # AceStream API port (corregido)
+  #     - "6878:6878"    # AceStream HTTP port
+  #     - "62062:62062"  # AceStream API port
   #   restart: unless-stopped
   #   networks:
   #     - aceproxy-net
-  ## For ARM32 systems:
-  # acestream:
-  #   image: jopsis/acestream:arm32-v3.2.14
+  ## For ARM32 systems (Raspberry Pi 3 and older):
+  # aceserve:
+  #   image: jopsis/aceserve:arm32-latest
   #   platform: linux/arm/v7
-  #   container_name: acestream-engine
+  #   container_name: aceserve-engine
   #   ports:
-  #     - "6878:6878"    # AceStream HTTP port (expuesto externamente)
-  #     - "62062:62062"  # AceStream API port (corregido)
+  #     - "6878:6878"    # AceStream HTTP port
+  #     - "62062:62062"  # AceStream API port
   #   restart: unless-stopped
   #   networks:
   #     - aceproxy-net
@@ -38,15 +38,15 @@ services:
       context: .
       dockerfile: Dockerfile
     # image: jopsis/httpaceproxy:latest
-    # container_name: httpaceproxy
+    container_name: httpaceproxy
     ports:
       - "8888:8888"    # HTTPAceProxy web interface
     environment:
-      - ACE_HOST=acestream
+      - ACE_HOST=aceserve
       - ACE_API_PORT=62062
       - ACE_HTTP_PORT=6878
-    # depends_on:
-    #   - acestream
+    depends_on:
+      - aceserve
     restart: unless-stopped
     networks:
       - aceproxy-net

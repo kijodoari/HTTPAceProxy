@@ -1,8 +1,28 @@
 # HTTPAceProxy - Quick Start Guide
 
-## ⚠️ Antes de empezar
+## ⚡ Inicio Más Rápido (Recomendado)
 
-**IMPORTANTE**: Necesitas tener **Ace Stream Engine** corriendo en tu máquina o en tu red.
+**Todo incluido con AceServe** (no necesitas instalar Ace Stream):
+
+```bash
+# Descargar docker-compose all-in-one
+curl -O https://raw.githubusercontent.com/jopsis/HTTPAceProxy/master/docker-compose-aio.yml
+
+# Iniciar (incluye HTTPAceProxy + AceServe)
+docker-compose -f docker-compose-aio.yml up -d
+
+# Acceder
+# http://localhost:8888/newera.m3u8
+# http://localhost:8888/stat
+```
+
+**Listo!** Ya tienes todo funcionando. Salta a la sección [URLs de acceso](#urls-de-acceso).
+
+---
+
+## 🔧 Alternativa: Usar tu propio Ace Stream
+
+Si ya tienes Ace Stream instalado o prefieres usar el motor oficial:
 
 ### ¿Tienes Ace Stream instalado?
 
@@ -81,10 +101,14 @@ docker run -d -p 8888:8888 --name httpaceproxy httpaceproxy
 
 ## URLs de acceso
 
-- **Playlist M3U8**: http://localhost:8888/newera.m3u8
-- **Playlist M3U**: http://localhost:8888/newera
-- **Estadísticas**: http://localhost:8888/stat
-- **Canal individual**: http://localhost:8888/newera/channel/NOMBRE_CANAL.m3u8
+**Playlists:**
+- NewEra (322 canales): http://localhost:8888/newera.m3u8
+- Elcano (71 canales): http://localhost:8888/elcano.m3u8
+- Canal individual: http://localhost:8888/newera/channel/NOMBRE_CANAL.m3u8
+
+**Dashboards:**
+- Estadísticas en tiempo real: http://localhost:8888/stat
+- Navegador de canales + verificación de peers: http://localhost:8888/statplugin
 
 ## Uso en apps
 
