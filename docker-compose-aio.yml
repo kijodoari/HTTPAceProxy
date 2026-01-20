@@ -12,7 +12,7 @@ services:
     networks:
       - aceproxy-net
     healthcheck:
-      test: ["CMD", "sh", "-c", "nc -z localhost 6878 && nc -z localhost 62062 || exit 1"]
+      test: ["CMD", "sh", "-c", "nc -z 127.0.0.1 6878 && nc -z 127.0.0.1 62062 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -29,7 +29,7 @@ services:
   #   networks:
   #     - aceproxy-net
   #   healthcheck:
-  #     test: ["CMD", "sh", "-c", "nc -z localhost 6878 && nc -z localhost 62062 || exit 1"]
+  #     test: ["CMD", "sh", "-c", "nc -z 127.0.0.1 6878 && nc -z 127.0.0.1 62062 || exit 1"]
   #     interval: 10s
   #     timeout: 5s
   #     retries: 5
@@ -46,7 +46,7 @@ services:
   #   networks:
   #     - aceproxy-net
   #   healthcheck:
-  #     test: ["CMD", "sh", "-c", "nc -z localhost 6878 && nc -z localhost 62062 || exit 1"]
+  #     test: ["CMD", "sh", "-c", "nc -z 127.0.0.1 6878 && nc -z 127.0.0.1 62062 || exit 1"]
   #     interval: 10s
   #     timeout: 5s
   #     retries: 5
