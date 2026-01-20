@@ -34,6 +34,20 @@ environment:
   - MAX_CONCURRENT_CHANNELS=10   # Permitir más canales diferentes
 ```
 
+**🔌 Controlar plugins activos (opcional):**
+Puedes habilitar solo los plugins que necesites:
+```yaml
+environment:
+  # Solo algunos plugins
+  - ENABLED_PLUGINS=newera,acepl,stat
+
+  # Solo dashboards (sin playlists)
+  - ENABLED_PLUGINS=stat,statplugin
+
+  # Todos los plugins (default)
+  - ENABLED_PLUGINS=all
+```
+
 ---
 
 ## 🔧 Alternativa: Usar tu propio Ace Stream
@@ -118,8 +132,9 @@ docker run -d -p 8888:8888 --name httpaceproxy httpaceproxy
 ## URLs de acceso
 
 **Playlists:**
-- NewEra (322 canales): http://localhost:8888/newera.m3u8
-- Elcano (71 canales): http://localhost:8888/elcano.m3u8
+- NewEra (322 canales deportivos): http://localhost:8888/newera.m3u8
+- Elcano (71 canales seleccionados): http://localhost:8888/elcano.m3u8
+- AcePL (1000+ canales de Acestream API): http://localhost:8888/acepl.m3u8
 - Canal individual: http://localhost:8888/newera/channel/NOMBRE_CANAL.m3u8
 
 **Dashboards:**

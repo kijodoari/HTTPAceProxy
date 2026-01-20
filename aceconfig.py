@@ -29,6 +29,13 @@ class AceConfig(acedefconfig.AceDefConfig):
     maxconns = int(os.getenv('MAX_CONNECTIONS', '10'))
     maxconcurrentchannels = int(os.getenv('MAX_CONCURRENT_CHANNELS', '5'))
 
+    # Plugin control (configurable via environment variable)
+    # 'all' = all plugins enabled (default)
+    # 'plugin1,plugin2,plugin3' = only specified plugins enabled
+    # '' = no plugins enabled
+    # Plugin names: newera, elcano, acepl, stat, statplugin
+    enabled_plugins = os.getenv('ENABLED_PLUGINS', 'all').lower()
+
     # Firewall settings
     # firewall = True
     # firewallnetranges = ('127.0.0.1', '192.168.0.0/16', '10.0.0.0/8')

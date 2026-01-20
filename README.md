@@ -9,13 +9,13 @@ HTTPAceProxy allows you to watch [Ace Stream](http://acestream.org/) live stream
 ## ✨ Features
 
 - 🎯 **Direct Streaming** - Access Ace Stream content via HTTP URLs
-- 📺 **Pre-configured Channels** - 300+ sports channels ready to use (NewEra & Elcano plugins)
+- 📺 **Pre-configured Channels** - 1300+ channels ready to use (NewEra, Elcano & AcePL plugins)
 - 👥 **Multi-Client & Multi-Channel** - Multiple users can watch different channels simultaneously
 - 🔌 **Plugin System** - Extensible architecture for custom channel sources
 - 📊 **Real-time Statistics** - Monitor connections, bandwidth, and system resources
 - 🐳 **Docker Ready** - Multi-architecture support (AMD64, ARM64)
 - 🌐 **Reverse Proxy Compatible** - Works with Nginx, Nginx Proxy Manager, Caddy
-- 🔄 **Auto-updates** - Playlists refresh automatically from IPFS sources
+- 🔄 **Auto-updates** - Playlists refresh automatically from IPFS and API sources
 
 ## 🚀 Quick Start
 
@@ -74,13 +74,15 @@ http://localhost:8888/statplugin    # Channel browser with peer checking
 ```
 http://localhost:8888/newera.m3u8   (322 sports channels)
 http://localhost:8888/elcano.m3u8   (71 curated channels)
+http://localhost:8888/acepl.m3u8    (1000+ channels from Acestream API)
 ```
 
 ## 📖 Documentation
 
 - **[Quick Start Guide](QUICKSTART.md)** - Installation and setup
 - **[Usage Guide](USAGE.md)** - Complete usage examples (VLC, KODI, IPTV apps)
-- **[Plugin Documentation](PLUGINS.md)** - NewEra and Elcano plugin details
+- **[Plugin Documentation](PLUGINS.md)** - NewEra, Elcano and AcePL plugin details
+- **[Plugin Control](PLUGIN-CONTROL.md)** - Enable/disable plugins via environment variables
 - **[Docker Setup](README.Docker.md)** - Advanced Docker configuration
 - **[Ace Stream Setup](ACESTREAM-SETUP.md)** - Configure Ace Stream Engine
 - **[Connection Limits](CONNECTION-LIMITS.md)** - Configure client and channel limits
@@ -170,6 +172,7 @@ maxconcurrentchannels = 5  # Maximum different channels simultaneously
 |--------|----------|-------------|--------|
 | **NewEra** | 322 | Sports channels (La Liga, Champions, DAZN, NBA, F1, etc.) | IPFS |
 | **Elcano** | 71 | Curated sports selection | IPFS |
+| **AcePL** | 1000+ | Official Acestream API channels (Sports, Movies, Regional, etc.) | Acestream API |
 | **Stat** | - | Real-time statistics and monitoring dashboard | Built-in |
 | **StatPlugin** | - | Channel browser with availability & peer checking | Built-in |
 
@@ -234,6 +237,11 @@ ACEPROXY_PORT=8888             # HTTPAceProxy port
 # Connection limits (optional)
 MAX_CONNECTIONS=10             # Maximum total client connections (default: 10)
 MAX_CONCURRENT_CHANNELS=5      # Maximum different channels simultaneously (default: 5)
+
+# Plugin control (optional)
+ENABLED_PLUGINS=all            # Which plugins to enable (default: all)
+                               # Options: 'all', 'newera,acepl,stat', 'stat,statplugin', etc.
+                               # Available: newera, elcano, acepl, stat, statplugin
 ```
 
 ### Configuration File
@@ -259,6 +267,54 @@ ace = {                        # Ace Stream Engine connection
 ```
 
 See `acedefconfig.py` for all available options.
+
+### Plugin Control
+
+Control which plugins are loaded using the `ENABLED_PLUGINS` environment variable:
+
+**Enable all plugins (default):**
+```yaml
+environment:
+  - ENABLED_PLUGINS=all
+```
+
+**Enable specific plugins only:**
+```yaml
+# Only playlist plugins (no dashboards)
+environment:
+  - ENABLED_PLUGINS=newera,elcano,acepl
+
+# Only dashboards (no playlists)
+environment:
+  - ENABLED_PLUGINS=stat,statplugin
+
+# Only NewEra and Stats
+environment:
+  - ENABLED_PLUGINS=newera,stat,statplugin
+
+# Only AcePL plugin
+environment:
+  - ENABLED_PLUGINS=acepl
+```
+
+**Disable all plugins:**
+```yaml
+environment:
+  - ENABLED_PLUGINS=
+```
+
+**Available plugins:**
+- `newera` - 322 sports channels (IPFS)
+- `elcano` - 71 curated channels (IPFS)
+- `acepl` - 1000+ channels (Acestream API)
+- `stat` - Real-time statistics dashboard
+- `statplugin` - Channel browser with peer checking
+
+**Notes:**
+- Plugin names are case-insensitive
+- Use comma-separated list for multiple plugins
+- Invalid plugin names will be logged as warnings and ignored
+- The server will show enabled/disabled plugins in the logs on startup
 
 ### Connection Limits Examples
 
@@ -428,9 +484,9 @@ This software is provided for legitimate uses only. The authors are not responsi
 
 - **Language:** Python 3.11
 - **Lines of Code:** ~9,000+
-- **Active Plugins:** 4 (NewEra, Elcano, Stat, StatPlugin)
-- **Available Channels:** 390+ (322 NewEra + 71 Elcano)
-- **Concurrent Channels:** Up to 5 different streams simultaneously
+- **Active Plugins:** 5 (NewEra, Elcano, AcePL, Stat, StatPlugin)
+- **Available Channels:** 1390+ (322 NewEra + 71 Elcano + 1000+ AcePL)
+- **Concurrent Channels:** Up to 5 different streams simultaneously (configurable)
 - **Multi-Client:** Unlimited clients per channel
 - **Supported Architectures:** AMD64, ARM64
 - **Docker Image Size:** ~200MB

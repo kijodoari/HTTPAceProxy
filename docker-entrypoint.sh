@@ -56,6 +56,8 @@ echo "    HTTP Port: ${ACESTREAM_HTTP_PORT}"
 echo "  Connection Limits:"
 echo "    Max Connections: ${MAX_CONNECTIONS:-10}"
 echo "    Max Concurrent Channels: ${MAX_CONCURRENT_CHANNELS:-5}"
+echo "  Plugins:"
+echo "    Enabled: ${ENABLED_PLUGINS:-all}"
 
 echo ""
 print_status "Starting HTTPAceProxy..."

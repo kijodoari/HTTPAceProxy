@@ -579,6 +579,29 @@ def add_handler(name):
 
 # Creating dict of handlers
 pluginslist = [os.path.splitext(os.path.basename(x))[0] for x in glob.glob('plugins/*_plugin.py')]
+
+# Filter plugins based on ENABLED_PLUGINS environment variable
+all_plugins = {p.split('_')[0].lower(): p for p in pluginslist}
+if AceConfig.enabled_plugins != 'all':
+    enabled_names = [p.strip() for p in AceConfig.enabled_plugins.split(',') if p.strip()]
+    # Check for invalid plugin names
+    invalid_plugins = [p for p in enabled_names if p not in all_plugins]
+    if invalid_plugins:
+        logger.warning('Invalid plugin names in ENABLED_PLUGINS (will be ignored): %s' % ', '.join(invalid_plugins))
+        logger.warning('Available plugins: %s' % ', '.join(sorted(all_plugins.keys())))
+    # Filter to only enabled plugins
+    filtered_pluginslist = [all_plugins[p] for p in enabled_names if p in all_plugins]
+    disabled_plugins = [p for p in all_plugins.keys() if p not in enabled_names]
+    if disabled_plugins:
+        logger.info('Disabled plugins: %s' % ', '.join(sorted(disabled_plugins)))
+    if filtered_pluginslist:
+        logger.info('Enabled plugins: %s' % ', '.join(sorted(enabled_names)))
+    else:
+        logger.warning('No valid plugins enabled!')
+    pluginslist = filtered_pluginslist
+else:
+    logger.info('All plugins enabled: %s' % ', '.join(sorted(all_plugins.keys())))
+
 AceProxy.pluginshandlers = {key:val for k in map(add_handler, pluginslist) for key,val in k.items() if k}
 logger.debug('Registered plugin handlers: %s' % list(AceProxy.pluginshandlers.keys()))
 # Server setup

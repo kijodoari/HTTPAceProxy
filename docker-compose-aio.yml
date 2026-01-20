@@ -52,10 +52,10 @@ services:
   #     retries: 5
   #     start_period: 30s
   httproxy:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    # image: jopsis/httpaceproxy:latest
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    image: jopsis/httpaceproxy:latest
     container_name: httpaceproxy
     ports:
       - "8888:8888"    # HTTPAceProxy web interface
@@ -66,6 +66,10 @@ services:
       # Connection limits - Adjust based on your needs (see CONNECTION-LIMITS.md)
       - MAX_CONNECTIONS=10           # Total clients (Personal: 10, Family: 25, Server: 100+)
       - MAX_CONCURRENT_CHANNELS=5    # Different channels (Personal: 3-5, Family: 5-10, Server: 15-20)
+      # Plugin control - Specify which plugins to enable
+      # Options: 'all' (default), 'newera,acepl,stat', 'stat,statplugin', etc.
+      # Available: newera, elcano, acepl, stat, statplugin
+      - ENABLED_PLUGINS=newera,elcano,stat,statplugin
     depends_on:
       aceserve:
         condition: service_healthy   # Wait for aceserve to be healthy before starting

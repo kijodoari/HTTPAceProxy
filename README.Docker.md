@@ -162,7 +162,43 @@ environment:
   # Límites de conexión (opcional)
   - MAX_CONNECTIONS=10               # Máximo de conexiones totales (default: 10)
   - MAX_CONCURRENT_CHANNELS=5        # Máximo de canales simultáneos (default: 5)
+
+  # Control de plugins (opcional)
+  - ENABLED_PLUGINS=all              # Plugins habilitados (default: all)
+                                     # Opciones: 'all', 'newera,acepl,stat', etc.
 ```
+
+### Control de plugins
+
+Puedes habilitar solo los plugins que necesites:
+
+**Todos los plugins (por defecto):**
+```yaml
+environment:
+  - ENABLED_PLUGINS=all
+```
+
+**Solo algunos plugins:**
+```yaml
+# Solo NewEra y AcePL
+environment:
+  - ENABLED_PLUGINS=newera,acepl,stat,statplugin
+
+# Solo dashboards (sin listas de canales)
+environment:
+  - ENABLED_PLUGINS=stat,statplugin
+
+# Solo un plugin
+environment:
+  - ENABLED_PLUGINS=acepl
+```
+
+**Plugins disponibles:**
+- `newera` - 322 canales deportivos
+- `elcano` - 71 canales curados
+- `acepl` - 1000+ canales de API Acestream
+- `stat` - Dashboard de estadísticas
+- `statplugin` - Navegador de canales
 
 ### Ejemplos de configuración de límites
 

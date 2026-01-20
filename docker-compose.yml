@@ -29,6 +29,10 @@ services:
       # Server: 100+ connections, 15-20 channels
       - MAX_CONNECTIONS=${MAX_CONNECTIONS:-10}
       - MAX_CONCURRENT_CHANNELS=${MAX_CONCURRENT_CHANNELS:-5}
+      # Plugin control - Specify which plugins to enable
+      # Options: 'all' (default), 'newera,acepl,stat', 'stat,statplugin', etc.
+      # Available: newera, elcano, acepl, stat, statplugin
+      - ENABLED_PLUGINS=${ENABLED_PLUGINS:-all}
     networks:
       - aceproxy-network
     healthcheck:
