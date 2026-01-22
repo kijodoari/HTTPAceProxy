@@ -13,7 +13,7 @@ HTTPAceProxy allows you to watch [Ace Stream](http://acestream.org/) live stream
 - 👥 **Multi-Client & Multi-Channel** - Multiple users can watch different channels simultaneously
 - 🔌 **Plugin System** - Extensible architecture for custom channel sources
 - 📊 **Real-time Statistics** - Monitor connections, bandwidth, and system resources
-- 🐳 **Docker Ready** - Multi-architecture support (AMD64, ARM64)
+- 🐳 **Docker Ready** - Multi-architecture support (AMD64, ARM64, ARM32)
 - 🌐 **Reverse Proxy Compatible** - Works with Nginx, Nginx Proxy Manager, Caddy
 - 🔄 **Auto-updates** - Playlists refresh automatically from IPFS and API sources
 
@@ -435,7 +435,7 @@ docker build -t httpaceproxy:local .
 ### Multi-architecture Build
 
 ```bash
-docker buildx build --platform linux/amd64,linux/arm64 -t httpaceproxy:multi .
+docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t httpaceproxy:multi .
 ```
 
 ### GitHub Actions
@@ -488,7 +488,7 @@ This software is provided for legitimate uses only. The authors are not responsi
 - **Available Channels:** 1390+ (322 NewEra + 71 Elcano + 1000+ AcePL)
 - **Concurrent Channels:** Up to 5 different streams simultaneously (configurable)
 - **Multi-Client:** Unlimited clients per channel
-- **Supported Architectures:** AMD64, ARM64
+- **Supported Architectures:** AMD64, ARM64, ARM32 (armv7)
 - **Docker Image Size:** ~200MB
 - **Web Dashboards:** 2 (Statistics + Channel Browser)
 
