@@ -86,6 +86,201 @@
         .stat-box .value { font-size: 24px; font-weight: bold; }
         .stat-box .sub { font-size: 11px; opacity: 0.8; margin-top: 4px; }
 
+        /* Server Config Panel */
+        .config-panel {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .config-panel h3 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+            font-weight: 600;
+        }
+        .config-section {
+            margin-bottom: 25px;
+        }
+        .config-section:last-child {
+            margin-bottom: 0;
+        }
+        .config-section h4 {
+            font-size: 14px;
+            color: #667eea;
+            margin-bottom: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .config-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .config-item .label {
+            font-size: 11px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+        .config-item .value {
+            font-size: 14px;
+            color: #333;
+            font-weight: 600;
+            font-family: 'Monaco', 'Courier New', monospace;
+        }
+        .plugins-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .plugin-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #4CAF50;
+        }
+        .plugin-card:last-child {
+            margin-bottom: 0;
+        }
+        .plugin-header-line {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s;
+        }
+        .plugin-header-line:hover {
+            opacity: 0.8;
+        }
+        .plugin-collapse-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+            transition: transform 0.3s ease;
+            fill: #333;
+            flex-shrink: 0;
+        }
+        .plugin-card.collapsed .plugin-collapse-icon {
+            transform: rotate(-90deg);
+        }
+        .plugin-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #333;
+            text-transform: capitalize;
+        }
+        .plugin-channels-badge {
+            background: #4CAF50;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .plugin-handlers {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .plugin-card.collapsed .plugin-handlers {
+            max-height: 0;
+            transition: max-height 0.3s ease-in;
+        }
+        .handler-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .handler-link:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        .handler-icon {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+            fill: #667eea;
+        }
+        .handler-url {
+            flex: 1;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            color: #667eea;
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .handler-copy-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .handler-copy-btn:hover {
+            background: #5568d3;
+        }
+        .handler-copy-btn.copied {
+            background: #4CAF50;
+        }
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+        .status-indicator.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-indicator.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status-indicator.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
         /* System Info Panel */
         .system-panel {
             background: white;
@@ -95,9 +290,11 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         .system-panel h3 {
-            font-size: 16px;
+            font-size: 18px;
             color: #333;
             margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
             padding-bottom: 10px;
             border-bottom: 2px solid #667eea;
         }
@@ -295,6 +492,63 @@
             </div>
         </div>
 
+        <!-- Server Configuration & Status -->
+        <div class="config-panel" id="config-panel" style="display:none;">
+            <h3>Server Configuration & Status</h3>
+
+            <!-- HTTPAceProxy Configuration -->
+            <div class="config-section">
+                <h4>HTTPAceProxy</h4>
+                <div class="config-grid">
+                    <div class="config-item">
+                        <span class="label">Host</span>
+                        <span class="value" id="config-proxy-host">-</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="label">Port</span>
+                        <span class="value" id="config-proxy-port">-</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="label">Max Connections</span>
+                        <span class="value" id="config-max-connections">-</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="label">Max Concurrent Channels</span>
+                        <span class="value" id="config-max-channels">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AceStream Engine Configuration -->
+            <div class="config-section">
+                <h4>Ace Stream Engine</h4>
+                <div class="config-grid">
+                    <div class="config-item">
+                        <span class="label">Host</span>
+                        <span class="value" id="config-ace-host">-</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="label">API Port</span>
+                        <span class="value" id="config-ace-api-port">-</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="label">HTTP Port</span>
+                        <span class="value" id="config-ace-http-port">-</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="label">Status</span>
+                        <div id="config-ace-status"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Plugins -->
+            <div class="config-section">
+                <h4>Plugins Loaded</h4>
+                <div id="config-plugins-list"></div>
+            </div>
+        </div>
+
         <!-- Connection Stats -->
         <div class="stats">
             <div class="stats-grid">
@@ -321,28 +575,7 @@
             </div>
         </div>
 
-        <!-- System Info -->
-        <div class="system-panel" id="system-panel" style="display:none;">
-            <h3>System Information</h3>
-            <div class="system-grid">
-                <div class="system-item">
-                    <span class="label">Platform</span>
-                    <span class="value" id="os-platform">-</span>
-                </div>
-                <div class="system-item">
-                    <span class="label">CPU Frequency</span>
-                    <span class="value" id="cpu-freq">-</span>
-                </div>
-                <div class="system-item">
-                    <span class="label">RAM Available</span>
-                    <span class="value" id="ram-available">-</span>
-                </div>
-                <div class="system-item">
-                    <span class="label">Disk Free</span>
-                    <span class="value" id="disk-free">-</span>
-                </div>
-            </div>
-        </div>
+        <!-- System Info - Hidden (info now shown in config panel above) -->
 
         <!-- Clients Table -->
         <div class="clients-panel">
@@ -397,6 +630,119 @@
         }
 
         function renderPage(data) {
+            // Server Configuration
+            if (data.server_config) {
+                const cfg = data.server_config;
+                document.getElementById('config-proxy-host').textContent = cfg.aceproxy.host;
+                document.getElementById('config-proxy-port').textContent = cfg.aceproxy.port;
+                document.getElementById('config-ace-host').textContent = cfg.acestream.host;
+                document.getElementById('config-ace-api-port').textContent = cfg.acestream.api_port;
+                document.getElementById('config-ace-http-port').textContent = cfg.acestream.http_port;
+                document.getElementById('config-max-connections').textContent = cfg.limits.max_connections;
+                document.getElementById('config-max-channels').textContent = cfg.limits.max_concurrent_channels;
+            }
+
+            // Server Info
+            if (data.server_info) {
+                const info = data.server_info;
+
+                // AceStream Engine Status
+                const aceStatus = info.acestream_engine;
+                const statusEl = document.getElementById('config-ace-status');
+                if (aceStatus.status === 'connected') {
+                    statusEl.innerHTML = `
+                        <div class="status-indicator success">
+                            <span class="status-dot"></span>
+                            <span>Connected ${aceStatus.version !== 'unknown' ? '(v' + aceStatus.version + ')' : ''}</span>
+                        </div>
+                    `;
+                } else {
+                    statusEl.innerHTML = `
+                        <div class="status-indicator error">
+                            <span class="status-dot"></span>
+                            <span>Not Connected</span>
+                        </div>
+                    `;
+                }
+
+                // Plugins
+                const pluginsList = document.getElementById('config-plugins-list');
+                if (info.plugins_loaded && info.plugins_loaded.length > 0) {
+                    // Save current collapse state before re-rendering
+                    const collapsedStates = {};
+                    pluginsList.querySelectorAll('.plugin-card').forEach(card => {
+                        const pluginName = card.getAttribute('data-plugin-name');
+                        collapsedStates[pluginName] = card.classList.contains('collapsed');
+                    });
+
+                    pluginsList.innerHTML = info.plugins_loaded.map(p => {
+                        const handlersHtml = p.handlers.map(handler => {
+                            const fullUrl = window.location.origin + '/' + handler;
+                            return `
+                                <div class="handler-link">
+                                    <svg class="handler-icon" viewBox="0 0 24 24">
+                                        <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/>
+                                    </svg>
+                                    <a href="/${handler}" target="_blank" class="handler-url">${fullUrl}</a>
+                                    <button class="handler-copy-btn" onclick="copyToClipboard('${fullUrl}', this); event.preventDefault();">Copy</button>
+                                </div>
+                            `;
+                        }).join('');
+
+                        // Determine if this plugin should be collapsed
+                        const isCollapsed = collapsedStates.hasOwnProperty(p.name) ? collapsedStates[p.name] : true;
+
+                        return `
+                            <div class="plugin-card ${isCollapsed ? 'collapsed' : ''}" data-plugin-name="${p.name}">
+                                <div class="plugin-header-line">
+                                    <div style="display:flex;align-items:center;">
+                                        <svg class="plugin-collapse-icon" viewBox="0 0 24 24">
+                                            <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+                                        </svg>
+                                        <span class="plugin-name">${p.name}</span>
+                                    </div>
+                                    ${p.channels > 0 ? `<span class="plugin-channels-badge">${p.channels} channels</span>` : ''}
+                                </div>
+                                <div class="plugin-handlers">
+                                    ${handlersHtml}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                    // Setup collapse functionality for each plugin
+                    setTimeout(() => {
+                        pluginsList.querySelectorAll('.plugin-card').forEach(card => {
+                            const handlersDiv = card.querySelector('.plugin-handlers');
+                            const headerDiv = card.querySelector('.plugin-header-line');
+
+                            // Calculate actual height for animation
+                            const actualHeight = handlersDiv.scrollHeight;
+
+                            // Set initial state based on collapsed class
+                            const isCollapsed = card.classList.contains('collapsed');
+                            handlersDiv.style.maxHeight = isCollapsed ? '0' : actualHeight + 'px';
+
+                            // Add click handler
+                            headerDiv.addEventListener('click', function(e) {
+                                const isCurrentlyCollapsed = card.classList.contains('collapsed');
+
+                                if (isCurrentlyCollapsed) {
+                                    handlersDiv.style.maxHeight = actualHeight + 'px';
+                                    card.classList.remove('collapsed');
+                                } else {
+                                    handlersDiv.style.maxHeight = '0';
+                                    card.classList.add('collapsed');
+                                }
+                            });
+                        });
+                    }, 0);
+                } else {
+                    pluginsList.innerHTML = '<div class="status-indicator warning"><span class="status-dot"></span><span>No plugins loaded</span></div>';
+                }
+
+                document.getElementById('config-panel').style.display = 'block';
+            }
+
             // System info
             const sys = data.sys_info;
             const conn = data.connection_info;
@@ -413,21 +759,10 @@
             // RAM
             document.getElementById('ram-used').textContent = bytes2human(sys.mem_info.used);
             document.getElementById('ram-total').textContent = bytes2human(sys.mem_info.total);
-            document.getElementById('ram-available').textContent = bytes2human(sys.mem_info.available);
 
             // Disk
             document.getElementById('disk-used').textContent = bytes2human(sys.disk_info.used);
             document.getElementById('disk-total').textContent = bytes2human(sys.disk_info.total);
-            document.getElementById('disk-free').textContent = bytes2human(sys.disk_info.free);
-
-            // Platform
-            document.getElementById('os-platform').textContent = sys.os_platform;
-            if (sys.cpu_freq && sys.cpu_freq.current) {
-                document.getElementById('cpu-freq').textContent = sys.cpu_freq.current.toFixed(0) + ' MHz';
-            }
-
-            // Show system panel
-            document.getElementById('system-panel').style.display = 'block';
 
             // Clients table
             renderClients(data.clients_data);
@@ -539,6 +874,25 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        function copyToClipboard(text, button) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.classList.add('copied');
+
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                button.textContent = 'Error';
+                setTimeout(() => {
+                    button.textContent = 'Copy';
+                }, 2000);
+            });
         }
 
         // Start polling

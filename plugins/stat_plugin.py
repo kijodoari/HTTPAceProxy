@@ -7,7 +7,7 @@ To use it, go to http://acehttp_proxy_ip:port/stat
 
 __author__ = 'Dorik1972, !Joy!'
 
-import time, zlib
+import time, zlib, sys, os, gevent
 import psutil, requests
 import logging
 from gevent.subprocess import Popen, PIPE
@@ -40,6 +40,72 @@ class Stat(object):
            except: connection.send_error(404, 'Not Found')
         else:
            connection.send_error(404, 'Not Found')
+
+    def _get_acestream_status(self):
+        '''Get AceStream engine version and status'''
+        try:
+            import aceclient
+            # Try to get engine version from AceProxy
+            if hasattr(self.AceProxy, 'ace_version') and self.AceProxy.ace_version is not None:
+                return {
+                    'status': 'connected',
+                    'version': self.AceProxy.ace_version,
+                    'host': self.AceConfig.ace.get('aceHostIP', 'unknown'),
+                    'api_port': self.AceConfig.ace.get('aceAPIport', 'unknown')
+                }
+            else:
+                # AceStream not found or not connected
+                return {
+                    'status': 'error',
+                    'version': 'unknown',
+                    'error': 'AceStream not found',
+                    'host': self.AceConfig.ace.get('aceHostIP', 'unknown'),
+                    'api_port': self.AceConfig.ace.get('aceAPIport', 'unknown')
+                }
+        except Exception as e:
+            return {
+                'status': 'error',
+                'version': 'unknown',
+                'error': str(e),
+                'host': self.AceConfig.ace.get('aceHostIP', 'unknown'),
+                'api_port': self.AceConfig.ace.get('aceAPIport', 'unknown')
+            }
+
+    def _get_plugins_info(self):
+        '''Get information about loaded plugins'''
+        plugins_info = []
+
+        if hasattr(self.AceProxy, 'pluginshandlers'):
+            # Get unique plugin instances
+            seen_plugins = set()
+            for handler_name, plugin_instance in self.AceProxy.pluginshandlers.items():
+                plugin_class = plugin_instance.__class__.__name__
+
+                if plugin_class not in seen_plugins:
+                    seen_plugins.add(plugin_class)
+
+                    plugin_data = {
+                        'name': plugin_class,
+                        'handlers': []
+                    }
+
+                    # Get all handlers for this plugin
+                    for h, p in self.AceProxy.pluginshandlers.items():
+                        if p.__class__.__name__ == plugin_class:
+                            plugin_data['handlers'].append(h)
+
+                    # Try to get channel count if available
+                    if hasattr(plugin_instance, 'channels'):
+                        plugin_data['channels'] = len(plugin_instance.channels)
+                    else:
+                        plugin_data['channels'] = 0
+
+                    # Check if it was loaded successfully
+                    plugin_data['status'] = 'loaded'
+
+                    plugins_info.append(plugin_data)
+
+        return plugins_info
 
     @staticmethod
     def ip_is_local(ip_string):
@@ -99,6 +165,37 @@ class Stat(object):
         clients = self.AceProxy.clientcounter.getAllClientsList() # Get connected clients list
         statusJSON = {}
         statusJSON['status'] = 'success'
+
+        # Server Configuration
+        statusJSON['server_config'] = {
+            'aceproxy': {
+                'host': self.AceConfig.httphost,
+                'port': self.AceConfig.httpport
+            },
+            'acestream': {
+                'host': self.AceConfig.ace.get('aceHostIP', 'unknown'),
+                'api_port': self.AceConfig.ace.get('aceAPIport', 'unknown'),
+                'http_port': self.AceConfig.ace.get('aceHTTPport', 'unknown')
+            },
+            'limits': {
+                'max_connections': self.AceConfig.maxconns,
+                'max_concurrent_channels': self.AceConfig.maxconcurrentchannels
+            },
+            'plugins': {
+                'enabled': getattr(self.AceConfig, 'enabled_plugins', 'all')
+            }
+        }
+
+        # Server Runtime Information
+        statusJSON['server_info'] = {
+            'python_version': sys.version.split()[0],
+            'os_name': self.AceConfig.osplatform,
+            'gevent_version': gevent.__version__,
+            'psutil_version': psutil.__version__,
+            'acestream_engine': self._get_acestream_status(),
+            'plugins_loaded': self._get_plugins_info()
+        }
+
         statusJSON['sys_info'] = {
             'os_platform': self.AceConfig.osplatform,
             'cpu_nums': psutil.cpu_count(),

@@ -556,8 +556,12 @@ else:
    params = {'method': 'get_version', 'format': 'json', 'callback': 'mycallback'}
    try:
       with requests.get(url, params=params, timeout=5) as r:
-         logger.info('Remote AceStream engine ver.{} will be used on {aceHostIP}:{aceAPIport}'.format(r.json()['result']['version'], **AceConfig.ace))
-   except: logger.error('AceStream not found!')
+         ace_version = r.json()['result']['version']
+         AceProxy.ace_version = ace_version
+         logger.info('Remote AceStream engine ver.{} will be used on {aceHostIP}:{aceAPIport}'.format(ace_version, **AceConfig.ace))
+   except:
+      AceProxy.ace_version = None
+      logger.error('AceStream not found!')
 
 # Loading plugins
 # Trying to change dir (would fail in freezed state)
