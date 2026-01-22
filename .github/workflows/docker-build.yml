@@ -32,7 +32,7 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64
           push: true
-          tags: jopsis/httpaceproxy:latest
+          tags: jopsis/httpaceproxy:latest-amd64
           cache-from: type=gha,scope=amd64
           cache-to: type=gha,mode=max,scope=amd64
 
@@ -61,11 +61,11 @@ jobs:
           file: ./Dockerfile
           platforms: linux/arm64
           push: true
-          tags: jopsis/httpaceproxy:latest
+          tags: jopsis/httpaceproxy:latest-arm64
           cache-from: type=gha,scope=arm64
           cache-to: type=gha,mode=max,scope=arm64
 
-  build-armv7:
+  build-arm32:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -83,20 +83,37 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push ARMv7 image
+      - name: Build and push ARM32 image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
           platforms: linux/arm/v7
           push: true
-          tags: jopsis/httpaceproxy:latest
-          cache-from: type=gha,scope=armv7
-          cache-to: type=gha,mode=max,scope=armv7
+          tags: jopsis/httpaceproxy:latest-arm32
+          cache-from: type=gha,scope=arm32
+          cache-to: type=gha,mode=max,scope=arm32
+
+  create-manifest:
+    runs-on: ubuntu-latest
+    needs: [build-amd64, build-arm64, build-arm32]
+    steps:
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Create and push multi-arch manifest
+        run: |
+          docker buildx imagetools create -t jopsis/httpaceproxy:latest \
+            jopsis/httpaceproxy:latest-amd64 \
+            jopsis/httpaceproxy:latest-arm64 \
+            jopsis/httpaceproxy:latest-arm32
 
   update-docs:
     runs-on: ubuntu-latest
-    needs: [build-amd64, build-arm64, build-armv7]
+    needs: create-manifest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
