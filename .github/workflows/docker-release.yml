@@ -5,9 +5,40 @@ on:
     types: [published]
 
 jobs:
-  build-and-push-release:
+  build-amd64:
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Build and push AMD64 release image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            jopsis/httpaceproxy:${{ steps.get_version.outputs.VERSION }}-amd64
+            jopsis/httpaceproxy:latest-amd64
+          cache-from: type=gha,scope=amd64
+          cache-to: type=gha,mode=max,scope=amd64
+
+  build-arm64:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -28,24 +59,81 @@ jobs:
         id: get_version
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
-      - name: Build and push release image
+      - name: Build and push ARM64 release image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          platforms: linux/arm64
           push: true
           tags: |
-            jopsis/httpaceproxy:latest
-            jopsis/httpaceproxy:${{ steps.get_version.outputs.VERSION }}
-          labels: |
-            org.opencontainers.image.title=HTTPAceProxy
-            org.opencontainers.image.description=Ace Stream HTTP Proxy with NewEra and Elcano plugins
-            org.opencontainers.image.version=${{ steps.get_version.outputs.VERSION }}
-            org.opencontainers.image.source=https://github.com/jopsis/HTTPAceProxy
-            org.opencontainers.image.licenses=GPL-3.0
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            jopsis/httpaceproxy:${{ steps.get_version.outputs.VERSION }}-arm64
+            jopsis/httpaceproxy:latest-arm64
+          cache-from: type=gha,scope=arm64
+          cache-to: type=gha,mode=max,scope=arm64
+
+  build-armv7:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Build and push ARMv7 release image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/arm/v7
+          push: true
+          tags: |
+            jopsis/httpaceproxy:${{ steps.get_version.outputs.VERSION }}-armv7
+            jopsis/httpaceproxy:latest-armv7
+          cache-from: type=gha,scope=armv7
+          cache-to: type=gha,mode=max,scope=armv7
+
+  create-manifest:
+    runs-on: ubuntu-latest
+    needs: [build-amd64, build-arm64, build-armv7]
+    steps:
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Create and push manifests
+        run: |
+          # Create latest manifest
+          docker buildx imagetools create -t jopsis/httpaceproxy:latest \
+            jopsis/httpaceproxy:latest-amd64 \
+            jopsis/httpaceproxy:latest-arm64 \
+            jopsis/httpaceproxy:latest-armv7
+
+          # Create version manifest
+          docker buildx imagetools create -t jopsis/httpaceproxy:${{ steps.get_version.outputs.VERSION }} \
+            jopsis/httpaceproxy:${{ steps.get_version.outputs.VERSION }}-amd64 \
+            jopsis/httpaceproxy:${{ steps.get_version.outputs.VERSION }}-arm64 \
+            jopsis/httpaceproxy:${{ steps.get_version.outputs.VERSION }}-armv7
 
       - name: Create release summary
         run: |
@@ -54,9 +142,14 @@ jobs:
           echo "**Repository:** jopsis/httpaceproxy" >> $GITHUB_STEP_SUMMARY
           echo "**Version:** ${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Tags:" >> $GITHUB_STEP_SUMMARY
+          echo "### Multi-arch Tags:" >> $GITHUB_STEP_SUMMARY
           echo "- \`latest\`" >> $GITHUB_STEP_SUMMARY
           echo "- \`${{ steps.get_version.outputs.VERSION }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Architecture-specific Tags:" >> $GITHUB_STEP_SUMMARY
+          echo "- \`latest-amd64\`, \`${{ steps.get_version.outputs.VERSION }}-amd64\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`latest-arm64\`, \`${{ steps.get_version.outputs.VERSION }}-arm64\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`latest-armv7\`, \`${{ steps.get_version.outputs.VERSION }}-armv7\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Architectures:" >> $GITHUB_STEP_SUMMARY
           echo "- linux/amd64 (x86_64)" >> $GITHUB_STEP_SUMMARY
@@ -65,6 +158,12 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Pull commands:" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "# Multi-arch (automatic platform selection)" >> $GITHUB_STEP_SUMMARY
           echo "docker pull jopsis/httpaceproxy:latest" >> $GITHUB_STEP_SUMMARY
           echo "docker pull jopsis/httpaceproxy:${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# Architecture-specific" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull jopsis/httpaceproxy:latest-amd64" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull jopsis/httpaceproxy:latest-arm64" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull jopsis/httpaceproxy:latest-armv7" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
