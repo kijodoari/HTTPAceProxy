@@ -2,6 +2,8 @@
 '''
 New Era Playlist Plugin configuration file
 '''
+import os
+
 # Proxy settings.
 # For example you can install tor browser and add in torrc SOCKSPort 9050
 # proxies = {'http' : 'socks5h://127.0.0.1:9050','https' : 'socks5h://127.0.0.1:9050'}
@@ -10,7 +12,8 @@ New Era Playlist Plugin configuration file
 proxies = {}
 
 # Insert your New Era playlist URL here or path to file ('file:///path/to/file' or 'file:///C://path//to//file' for Windows OS)
-url = 'https://ipfs.io/ipns/k2k4r8oqlcjxsritt5mczkcn4mmvcmymbqw7113fz2flkrerfwfps004/data/listas/lista_fuera_iptv.m3u'
+# Can be overridden with NEWERA_PLAYLIST_URL environment variable
+url = os.getenv('NEWERA_PLAYLIST_URL', 'https://ipfs.io/ipns/k2k4r8oqlcjxsritt5mczkcn4mmvcmymbqw7113fz2flkrerfwfps004/data/listas/lista_fuera_iptv.m3u')
 
 # Download playlist every N minutes to keep it fresh
 # 0 = disabled (will download once on startup)

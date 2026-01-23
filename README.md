@@ -240,6 +240,10 @@ MAX_CONCURRENT_CHANNELS=5      # Maximum different channels simultaneously (defa
 ENABLED_PLUGINS=all            # Which plugins to enable (default: all)
                                # Options: 'all', 'newera,acepl,stat', 'stat,statplugin', etc.
                                # Available: newera, elcano, acepl, stat, statplugin
+
+# Plugin playlist URLs (optional - uses defaults if not set)
+NEWERA_PLAYLIST_URL=           # Custom NewEra playlist URL
+ELCANO_PLAYLIST_URL=           # Custom Elcano playlist URL
 ```
 
 ### Configuration File
@@ -313,6 +317,40 @@ environment:
 - Use comma-separated list for multiple plugins
 - Invalid plugin names will be logged as warnings and ignored
 - The server will show enabled/disabled plugins in the logs on startup
+
+### Custom Playlist URLs
+
+Override the default playlist URLs for NewEra and Elcano plugins using environment variables:
+
+**NewEra Plugin URL:**
+```yaml
+environment:
+  - NEWERA_PLAYLIST_URL=https://your-custom-url/playlist.m3u
+```
+
+**Elcano Plugin URL:**
+```yaml
+environment:
+  - ELCANO_PLAYLIST_URL=https://your-custom-url/playlist.m3u
+```
+
+**Example - Use custom URLs for both:**
+```yaml
+environment:
+  - ENABLED_PLUGINS=newera,elcano,stat,statplugin
+  - NEWERA_PLAYLIST_URL=https://my-server.com/newera.m3u
+  - ELCANO_PLAYLIST_URL=https://acestream-ids.vercel.app/hashes_acestream.m3u
+```
+
+**Default URLs:**
+- NewEra: `https://ipfs.io/ipns/k2k4r8oqlcjxsritt5mczkcn4mmvcmymbqw7113fz2flkrerfwfps004/data/listas/lista_fuera_iptv.m3u`
+- Elcano: `https://acestream-ids.vercel.app/hashes_acestream.m3u`
+
+**Notes:**
+- If not specified, plugins use their default URLs
+- URLs can point to IPFS, HTTPS, or local files (`file:///path/to/playlist.m3u`)
+- Changes require container restart to take effect
+- Custom URLs will be shown in the startup logs
 
 ### Connection Limits Examples
 

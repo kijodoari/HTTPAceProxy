@@ -58,6 +58,12 @@ echo "    Max Connections: ${MAX_CONNECTIONS:-10}"
 echo "    Max Concurrent Channels: ${MAX_CONCURRENT_CHANNELS:-5}"
 echo "  Plugins:"
 echo "    Enabled: ${ENABLED_PLUGINS:-all}"
+if [ -n "${NEWERA_PLAYLIST_URL}" ]; then
+    echo "    NewEra Playlist URL: ${NEWERA_PLAYLIST_URL}"
+fi
+if [ -n "${ELCANO_PLAYLIST_URL}" ]; then
+    echo "    Elcano Playlist URL: ${ELCANO_PLAYLIST_URL}"
+fi
 
 echo ""
 print_status "Starting HTTPAceProxy..."

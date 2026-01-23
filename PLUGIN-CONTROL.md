@@ -25,6 +25,55 @@ ENABLED_PLUGINS=plugin1,plugin2,plugin3
 - `stat` - Dashboard de estadísticas en tiempo real
 - `statplugin` - Navegador de canales con verificación de peers
 
+### NEWERA_PLAYLIST_URL
+
+Permite personalizar la URL de la playlist de NewEra.
+
+**Formato:**
+```
+NEWERA_PLAYLIST_URL=https://tu-url-personalizada/playlist.m3u
+```
+
+**Valor por defecto:**
+```
+https://ipfs.io/ipns/k2k4r8oqlcjxsritt5mczkcn4mmvcmymbqw7113fz2flkrerfwfps004/data/listas/lista_fuera_iptv.m3u
+```
+
+### ELCANO_PLAYLIST_URL
+
+Permite personalizar la URL de la playlist de Elcano.
+
+**Formato:**
+```
+ELCANO_PLAYLIST_URL=https://tu-url-personalizada/playlist.m3u
+```
+
+**Valor por defecto:**
+```
+https://acestream-ids.vercel.app/hashes_acestream.m3u
+```
+
+**Tipos de URL soportados:**
+- URLs HTTPS: `https://ejemplo.com/playlist.m3u`
+- URLs IPFS: `https://ipfs.io/ipns/...` o `https://ipfs.io/ipfs/...`
+- Archivos locales: `file:///path/to/playlist.m3u`
+
+**Ejemplo combinado:**
+```yaml
+services:
+  httproxy:
+    environment:
+      - ENABLED_PLUGINS=newera,elcano,stat,statplugin
+      - NEWERA_PLAYLIST_URL=https://mi-servidor.com/newera.m3u
+      - ELCANO_PLAYLIST_URL=https://otra-url.com/elcano.m3u
+```
+
+**Notas:**
+- Si no se especifica, se usa la URL por defecto
+- Las URLs personalizadas se muestran en los logs de inicio
+- Los cambios requieren reiniciar el contenedor
+- Si la URL es inválida o no responde, el plugin no se cargará
+
 ## 📋 Ejemplos de Uso
 
 ### Configuración en Docker Compose

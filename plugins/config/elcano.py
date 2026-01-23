@@ -2,6 +2,8 @@
 '''
 Elcano Playlist Plugin configuration file
 '''
+import os
+
 # Proxy settings.
 # For example you can install tor browser and add in torrc SOCKSPort 9050
 # proxies = {'http' : 'socks5h://127.0.0.1:9050','https' : 'socks5h://127.0.0.1:9050'}
@@ -10,7 +12,10 @@ Elcano Playlist Plugin configuration file
 proxies = {}
 
 # Insert your Elcano playlist URL here or path to file ('file:///path/to/file' or 'file:///C://path//to//file' for Windows OS)
-url = 'https://ipfs.io/ipns/k51qzi5uqu5di462t7j4vu4akwfhvtjhy88qbupktvoacqfqe9uforjvhyi4wr/hashes_acestream.m3u'
+# Can be overridden with ELCANO_PLAYLIST_URL environment variable
+# Old URL (kept as backup):
+# url = 'https://ipfs.io/ipns/k51qzi5uqu5di462t7j4vu4akwfhvtjhy88qbupktvoacqfqe9uforjvhyi4wr/hashes_acestream.m3u'
+url = os.getenv('ELCANO_PLAYLIST_URL', 'https://acestream-ids.vercel.app/hashes_acestream.m3u')
 
 # Download playlist every N minutes to keep it fresh
 # 0 = disabled (will download once on startup)

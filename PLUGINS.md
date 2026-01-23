@@ -28,10 +28,24 @@ http://localhost:8888/newera.m3u8/channel/DAZN%201%20FHD%20--%3E%20NEW%20ERA.ts
 
 ### Configuración:
 
+**Opción 1: Variable de entorno (Docker - Recomendado):**
+
+```yaml
+environment:
+  - NEWERA_PLAYLIST_URL=https://tu-url-personalizada/playlist.m3u
+```
+
+**Opción 2: Archivo de configuración:**
+
 Edita `plugins/config/newera.py` para cambiar:
-- URL de la playlist
+- URL de la playlist (o usa la variable de entorno `NEWERA_PLAYLIST_URL`)
 - Frecuencia de actualización (updateevery)
 - URL de la guía de TV (tvgurl)
+
+**URL por defecto:**
+```
+https://ipfs.io/ipns/k2k4r8oqlcjxsritt5mczkcn4mmvcmymbqw7113fz2flkrerfwfps004/data/listas/lista_fuera_iptv.m3u
+```
 
 ### Categorías disponibles:
 - 1RFEF - Primera Federación
@@ -84,10 +98,29 @@ http://localhost:8888/elcano.m3u8/channel/M+%20LaLiga.ts
 
 ### Configuración:
 
+**Opción 1: Variable de entorno (Docker - Recomendado):**
+
+```yaml
+environment:
+  - ELCANO_PLAYLIST_URL=https://tu-url-personalizada/playlist.m3u
+```
+
+**Opción 2: Archivo de configuración:**
+
 Edita `plugins/config/elcano.py` para cambiar:
-- URL de la playlist
+- URL de la playlist (o usa la variable de entorno `ELCANO_PLAYLIST_URL`)
 - Frecuencia de actualización (updateevery)
 - URL de la guía de TV (tvgurl)
+
+**URL por defecto:**
+```
+https://acestream-ids.vercel.app/hashes_acestream.m3u
+```
+
+**URL anterior (guardada como backup en el código):**
+```
+https://ipfs.io/ipns/k51qzi5uqu5di462t7j4vu4akwfhvtjhy88qbupktvoacqfqe9uforjvhyi4wr/hashes_acestream.m3u
+```
 
 ### Categorías disponibles:
 - EUROSPORT
