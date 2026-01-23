@@ -13,9 +13,9 @@ proxies = {}
 
 # Insert your Elcano playlist URL here or path to file ('file:///path/to/file' or 'file:///C://path//to//file' for Windows OS)
 # Can be overridden with ELCANO_PLAYLIST_URL environment variable
-# Old URL (kept as backup):
+# Old URL (kept as backup): https://acestream-ids.vercel.app/hashes_acestream.m3u
 # url = 'https://ipfs.io/ipns/k51qzi5uqu5di462t7j4vu4akwfhvtjhy88qbupktvoacqfqe9uforjvhyi4wr/hashes_acestream.m3u'
-url = os.getenv('ELCANO_PLAYLIST_URL', 'https://acestream-ids.vercel.app/hashes_acestream.m3u')
+url = os.getenv('ELCANO_PLAYLIST_URL', 'https://ipfs.io/ipns/k51qzi5uqu5di462t7j4vu4akwfhvtjhy88qbupktvoacqfqe9uforjvhyi4wr/hashes_acestream.m3u')
 
 # Download playlist every N minutes to keep it fresh
 # 0 = disabled (will download once on startup)

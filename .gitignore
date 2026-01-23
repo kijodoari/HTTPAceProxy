@@ -142,3 +142,5 @@ logs/
 *.tmp
 *.bak
 *.old
+/data
+/gluetun
