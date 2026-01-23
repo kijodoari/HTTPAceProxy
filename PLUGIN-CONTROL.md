@@ -36,7 +36,7 @@ NEWERA_PLAYLIST_URL=https://tu-url-personalizada/playlist.m3u
 
 **Valor por defecto:**
 ```
-https://ipfs.io/ipns/k2k4r8oqlcjxsritt5mczkcn4mmvcmymbqw7113fz2flkrerfwfps004/data/listas/lista_fuera_iptv.m3u
+https://ipfs.io/ipns/<IPFSID>/data/listas/lista_fuera_iptv.m3u
 ```
 
 ### ELCANO_PLAYLIST_URL
@@ -50,7 +50,7 @@ ELCANO_PLAYLIST_URL=https://tu-url-personalizada/playlist.m3u
 
 **Valor por defecto:**
 ```
-https://acestream-ids.vercel.app/hashes_acestream.m3u
+https://<proyecto>-ids.vercel.app/hashes_acestream.m3u
 ```
 
 **Tipos de URL soportados:**

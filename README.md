@@ -339,12 +339,12 @@ environment:
 environment:
   - ENABLED_PLUGINS=newera,elcano,stat,statplugin
   - NEWERA_PLAYLIST_URL=https://my-server.com/newera.m3u
-  - ELCANO_PLAYLIST_URL=https://acestream-ids.vercel.app/hashes_acestream.m3u
+  - ELCANO_PLAYLIST_URL=https://<PROYECTO>-ids.vercel.app/hashes_acestream.m3u
 ```
 
 **Default URLs:**
-- NewEra: `https://ipfs.io/ipns/k2k4r8oqlcjxsritt5mczkcn4mmvcmymbqw7113fz2flkrerfwfps004/data/listas/lista_fuera_iptv.m3u`
-- Elcano: `https://acestream-ids.vercel.app/hashes_acestream.m3u`
+- NewEra: `https://ipfs.io/ipns/<IDIPFS>/data/listas/lista_fuera_iptv.m3u`
+- Elcano: `https://<PROYECTO>-ids.vercel.app/hashes_acestream.m3u`
 
 **Notes:**
 - If not specified, plugins use their default URLs
