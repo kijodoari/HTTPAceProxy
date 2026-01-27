@@ -21,7 +21,7 @@ url = os.getenv('NEWERA_PLAYLIST_URL', 'https://ipfs.io/ipns/k2k4r8oqlcjxsritt5m
 updateevery = 30
 
 # TV Guide URL
-tvgurl = 'https://raw.githubusercontent.com/davidmuma/EPG_dobleM/refs/heads/master/guiatv.xml'
+tvgurl = 'https://raw.githubusercontent.com/davidmuma/EPG_dobleM/master/guiatv_sincolor0.xml.gz'
 
 # Shift the TV Guide time to the specified number of hours
 tvgshift = 0

@@ -23,7 +23,7 @@ url = os.getenv('ELCANO_PLAYLIST_URL', 'https://ipfs.io/ipns/k51qzi5uqu5di462t7j
 updateevery = 30
 
 # TV Guide URL
-tvgurl = 'https://github.com/davidmuma/EPG_dobleM/raw/refs/heads/master/EPG_dobleM.xml'
+tvgurl = 'https://raw.githubusercontent.com/davidmuma/EPG_dobleM/master/guiatv_sincolor0.xml.gz'
 
 # Shift the TV Guide time to the specified number of hours
 tvgshift = 0
