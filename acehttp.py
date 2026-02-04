@@ -126,21 +126,27 @@ class HTTPHandler(BaseHTTPRequestHandler):
         try:
            self.splittedpath = self.path.split('/')
            self.reqtype = self.splittedpath[1].lower()
-           logging.debug('[%s]: Calling plugin handler for reqtype: %s' % (self.clientip, self.reqtype))
-           original_reqtype = self.reqtype
-           try:
-               AceProxy.pluginshandlers[self.reqtype].handle(self) # If request should be handled by plugin
-           except Exception as plugin_error:
-               logging.error('[%s]: Plugin handler error: %s' % (self.clientip, repr(plugin_error)))
-               logging.error(traceback.format_exc())
-               raise
-           # If plugin changed reqtype, continue processing with new reqtype
-           if hasattr(self, 'reqtype') and self.reqtype != original_reqtype:
-               logging.debug('[%s]: Plugin redirected to reqtype: %s' % (self.clientip, self.reqtype))
-               raise IndexError()  # Continue processing with new reqtype
+
+           if self.reqtype in AceProxy.pluginshandlers:
+               logging.debug('[%s]: Calling plugin handler for reqtype: %s' % (self.clientip, self.reqtype))
+               original_reqtype = self.reqtype
+               try:
+                   AceProxy.pluginshandlers[self.reqtype].handle(self) # If request should be handled by plugin
+               except Exception as plugin_error:
+                   logging.error('[%s]: Plugin handler error: %s' % (self.clientip, repr(plugin_error)))
+                   logging.error(traceback.format_exc())
+                   raise
+
+               # If plugin changed reqtype, continue processing with new reqtype
+               if hasattr(self, 'reqtype') and self.reqtype != original_reqtype:
+                   logging.debug('[%s]: Plugin redirected to reqtype: %s' % (self.clientip, self.reqtype))
+                   raise IndexError()  # Continue processing with new reqtype
+               else:
+                   logging.debug('[%s]: Plugin handler completed successfully' % self.clientip)
+                   return  # Plugin handled the request successfully
            else:
-               logging.debug('[%s]: Plugin handler completed successfully' % self.clientip)
-               return  # Plugin handled the request successfully
+               # Not a plugin, move to core request handling
+               raise KeyError(self.reqtype)
 
         except (IndexError, KeyError):
            self.reqtype = {'torrent': 'url', 'pid': 'content_id'}.get(self.reqtype, self.reqtype) # For backward compatibility
@@ -576,10 +582,13 @@ def add_handler(name):
        try:
           plugname = name.split('_')[0].capitalize()
           plugininstance = getattr(__import__(name), plugname)(AceConfig, AceProxy)
-       except Exception as err: logger.error("Can't load plugin %s: %s" % (plugname, repr(err)))
+       except Exception as err:
+          logger.error("Can't load plugin %s: %s" % (plugname, repr(err)))
+          return {}
        else:
           logger.debug('[%-15.15s]: Plugin loaded' % plugname)
           return {j:plugininstance for j in plugininstance.handlers}
+    return {}
 
 # Creating dict of handlers
 pluginslist = [os.path.splitext(os.path.basename(x))[0] for x in glob.glob('plugins/*_plugin.py')]
@@ -606,7 +615,11 @@ if AceConfig.enabled_plugins != 'all':
 else:
     logger.info('All plugins enabled: %s' % ', '.join(sorted(all_plugins.keys())))
 
-AceProxy.pluginshandlers = {key:val for k in map(add_handler, pluginslist) for key,val in k.items() if k}
+AceProxy.pluginshandlers = {}
+for plugin in pluginslist:
+    handlers = add_handler(plugin)
+    if handlers:
+        AceProxy.pluginshandlers.update(handlers)
 logger.debug('Registered plugin handlers: %s' % list(AceProxy.pluginshandlers.keys()))
 # Server setup
 AceProxy.server = StreamServer((AceConfig.httphost, AceConfig.httpport), handle=HTTPHandler, spawn=AceProxy.pool)
