@@ -95,7 +95,7 @@ class Stat(object):
                             plugin_data['handlers'].append(h)
 
                     # Try to get channel count if available
-                    if hasattr(plugin_instance, 'channels'):
+                    if hasattr(plugin_instance, 'channels') and plugin_instance.channels is not None:
                         plugin_data['channels'] = len(plugin_instance.channels)
                     else:
                         plugin_data['channels'] = 0
