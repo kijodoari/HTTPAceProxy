@@ -226,6 +226,25 @@ min_availability = 0.9
 categories_filter = ['movies']
 ```
 
+## 🅰️ Plugin Af1c1onados
+
+Plugin que obtiene una lista organizada de canales desde la web de Af1c1onados.
+
+### Características:
+- **Estructura JSON:** Utiliza la fuente oficial en formato estructurado para una carga rápida.
+- **Grupos Dinámicos:** Mantiene las categorías originales (DAZN, Eurosport, etc.) definidas por el autor.
+- **Logos de Alta Calidad:** Incluye las imágenes proporcionadas en la fuente original.
+- **Actualización Automática:** Sincronización periódica con la fuente remota.
+
+### URLs de acceso:
+
+**Playlist completa:**
+```
+http://localhost:8888/af1c1onados
+```
+
+---
+
 ## 🕵️ Plugin MisterChire
 
 Plugin que realiza scraping del sitio misterchire.com para obtener enlaces Ace Stream actualizados.

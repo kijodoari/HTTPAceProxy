@@ -71,6 +71,7 @@ http://localhost:8888/statplugin    # Channel browser with peer checking
 **Playlists:**
 ```
 http://localhost:8888/aio          (Combined All-In-One list)
+http://localhost:8888/af1c1onados   (From af1c1onados.vercel.app)
 http://localhost:8888/misterchire   (Scraped from misterchire.com)
 http://localhost:8888/newera       (322 sports channels)
 http://localhost:8888/elcano       (71 curated channels)
@@ -171,6 +172,7 @@ maxconcurrentchannels = 5  # Maximum different channels simultaneously
 | Plugin | Channels | Description | Source |
 |--------|----------|-------------|--------|
 | **AIO** | Combined | Master list combining all active content plugins | Internal |
+| **Af1c1onados** | 100+ | Organized JSON-based channel list | af1c1onados.vercel.app |
 | **MisterChire** | 100+ | Dynamically scraped sports competitions | misterchire.com |
 | **NewEra** | 322 | Sports channels (La Liga, Champions, DAZN, NBA, F1, etc.) | IPFS |
 | **Elcano** | 71 | Curated sports selection | IPFS |
@@ -524,8 +526,8 @@ This software is provided for legitimate uses only. The authors are not responsi
 
 - **Language:** Python 3.11
 - **Lines of Code:** ~9,000+
-- **Active Plugins:** 7 (AIO, MisterChire, NewEra, Elcano, AcePL, Stat, StatPlugin)
-- **Available Channels:** 1500+ (Combined from all sources)
+- **Active Plugins:** 8 (AIO, Af1c1onados, MisterChire, NewEra, Elcano, AcePL, Stat, StatPlugin)
+- **Available Channels:** 1600+ (Combined from all sources)
 - **Concurrent Channels:** Up to 5 different streams simultaneously (configurable)
 - **Multi-Client:** Unlimited clients per channel
 - **Supported Architectures:** AMD64, ARM64, ARM32 (armv7)

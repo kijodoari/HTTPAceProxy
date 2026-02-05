@@ -591,7 +591,9 @@ def add_handler(name):
     return {}
 
 # Creating dict of handlers
-pluginslist = [os.path.splitext(os.path.basename(x))[0] for x in glob.glob('plugins/*_plugin.py')]
+pluginslist_all = glob.glob('plugins/*_plugin.py')
+logger.debug('Found plugin files: %s' % pluginslist_all)
+pluginslist = [os.path.splitext(os.path.basename(x))[0] for x in pluginslist_all]
 
 # Filter plugins based on ENABLED_PLUGINS environment variable
 all_plugins = {p.split('_')[0].lower(): p for p in pluginslist}

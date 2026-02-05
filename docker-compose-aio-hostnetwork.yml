@@ -36,7 +36,7 @@ services:
       # Plugin control - Specify which plugins to enable
       # Options: 'all' (default), 'newera,acepl,stat', 'stat,statplugin', etc.
       # Available: newera, elcano, acepl, stat, statplugin, misterchire
-      - ENABLED_PLUGINS=newera,elcano,stat,statplugin,misterchire,aio
+      - ENABLED_PLUGINS=newera,elcano,stat,statplugin,misterchire,af1c1onados,aio
       # Plugin playlist URLs (optional - uses defaults if not set)
       # - NEWERA_PLAYLIST_URL=https://your-custom-url/playlist.m3u
       # - ELCANO_PLAYLIST_URL=https://your-custom-url/playlist.m3u

@@ -17,8 +17,8 @@ url = os.getenv('NEWERA_PLAYLIST_URL', 'https://ipfs.io/ipns/k2k4r8oqlcjxsritt5m
 
 # Download playlist every N minutes to keep it fresh
 # 0 = disabled (will download once on startup)
-# Recommended: 30 (update every 30 minutes)
-updateevery = 30
+# Recommended: 60 (update every 60 minutes)
+updateevery = 60
 
 # TV Guide URL
 tvgurl = 'https://raw.githubusercontent.com/davidmuma/EPG_dobleM/master/guiatv_sincolor0.xml.gz'
