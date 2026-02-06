@@ -2,6 +2,7 @@
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/jopsis/httpaceproxy)](https://hub.docker.com/r/jopsis/httpaceproxy)
 [![GitHub Release](https://img.shields.io/github/v/release/jopsis/HTTPAceProxy)](https://github.com/jopsis/HTTPAceProxy/releases)
+[![GitHub Issues](https://img.shields.io/github/issues/jopsis/HTTPAceProxy)](https://github.com/jopsis/HTTPAceProxy/issues)
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
 
 HTTPAceProxy allows you to watch [Ace Stream](http://acestream.org/) live streams and torrent files over HTTP. Access Ace Stream content through a simple HTTP interface compatible with VLC, KODI, IPTV apps, and modern browsers.
@@ -496,6 +497,17 @@ Contributions are welcome! Areas for improvement:
 - **Testing** - Multi-platform testing
 - **Features** - EPG integration, authentication, etc.
 
+### Reporting Issues
+
+Found a bug or have a feature request? Please open an issue on our tracker:
+- **Issue Tracker:** https://github.com/jopsis/HTTPAceProxy/issues
+
+When reporting issues, please include:
+- HTTPAceProxy version (check logs or `/stat` dashboard)
+- Docker image version or Python version
+- Relevant logs from `docker logs httpaceproxy`
+- Steps to reproduce the problem
+
 ### Creating a Plugin
 
 See `plugins/PluginInterface_example.py` for a template.
@@ -519,8 +531,8 @@ This software is provided for legitimate uses only. The authors are not responsi
 
 - **GitHub Repository:** https://github.com/jopsis/HTTPAceProxy
 - **Docker Hub:** https://hub.docker.com/r/jopsis/httpaceproxy
+- **Issue Tracker:** https://github.com/jopsis/HTTPAceProxy/issues
 - **Ace Stream:** https://acestream.org
-- **Issue Tracker:** https://github.com/jopsis/docker-acestream-aceserve/issues (Include `httpaceproxy` in the title)
 
 ## 📈 Project Statistics
 
@@ -538,4 +550,7 @@ This software is provided for legitimate uses only. The authors are not responsi
 
 **Latest Version:** Check [Releases](https://github.com/jopsis/HTTPAceProxy/releases) for the latest stable version.
 
-**Need Help?** Open an [issue](https://github.com/jopsis/HTTPAceProxy/issues) or check the documentation links above.
+**Need Help?**
+- 🐛 **Report bugs or request features:** [Open an issue](https://github.com/jopsis/HTTPAceProxy/issues)
+- 📖 **Documentation:** Check the guides listed above
+- 💬 **Questions:** Use GitHub Discussions or open an issue

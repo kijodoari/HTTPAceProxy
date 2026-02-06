@@ -371,10 +371,13 @@ docker logs httpaceproxy | grep "Plugin loaded"
 - Ejemplo: `M+ LaLiga` → `M%2B%20LaLiga`
 
 ### ¿Necesitas ayuda o has encontrado un error?
-Como este proyecto es un fork, por favor abre los issues en:
-[https://github.com/jopsis/docker-acestream-aceserve/issues](https://github.com/jopsis/docker-acestream-aceserve/issues)
+Abre un issue en el repositorio del proyecto:
+[https://github.com/jopsis/HTTPAceProxy/issues](https://github.com/jopsis/HTTPAceProxy/issues)
 
-**Importante:** Indica `httpaceproxy` en el título del issue para identificarlo correctamente.
+**Al reportar un issue incluye:**
+- Versión de HTTPAceProxy (visible en los logs o en `/stat`)
+- Logs relevantes de `docker logs httpaceproxy`
+- Pasos para reproducir el problema
 
 ---
 
